@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class RegisteredUserController extends Controller
 {
@@ -30,9 +33,17 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $teamDisplayName = $request->company;
+        $teamName = Str::slug($request->company);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'company' => [
+                'required',
+                'string',
+                Rule::unique('teams', 'name')->ignore($teamName),
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -41,6 +52,14 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+
+        $team = Team::create([
+            'display_name' => $teamDisplayName,
+            'name' => $teamName,
+            'password' => Hash::make($request->password),
+        ]);
+
+        $user->addRole('company-owner', $team);
 
         event(new Registered($user));
 
