@@ -8,8 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laratrust\Traits\HasRolesAndPermissions;
 use Laratrust\Contracts\LaratrustUser;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-class User extends Authenticatable implements LaratrustUser
+class User extends Authenticatable implements MustVerifyEmail, LaratrustUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
