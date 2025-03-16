@@ -1,6 +1,6 @@
-import { type BreadcrumbItem, type SharedData } from '@/types';
+import { type BreadcrumbItem } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import CompanyLayout from "@/layouts/company/layout";
+import {Textarea} from "@/components/ui/textarea";
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -19,24 +20,21 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 interface CompanyForm {
-    name: string;
-    displayName: string;
+    display_name: string;
     description: string;
 }
 
-export default function General({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
-    const { auth } = usePage<SharedData>().props;
+export default function General({ company }: { company: CompanyForm }) {
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<CompanyForm>>({
-        name: auth.user.name,
-        displayName: auth.user.email,
-        description: auth.user.email,
+        display_name: company.display_name,
+        description: company.description,
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'), {
+        patch(route('company.update'), {
             preserveScroll: true,
         });
     };
@@ -51,41 +49,25 @@ export default function General({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="display_name">Name</Label>
 
                             <Input
-                                id="name"
+                                id="display_name"
                                 className="mt-1 block w-full"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                value={data.display_name}
+                                onChange={(e) => setData('display_name', e.target.value)}
                                 required
-                                autoComplete="name"
-                                placeholder="Full name"
-                            />
-
-                            <InputError className="mt-2" message={errors.name} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="displayName">Display Name</Label>
-
-                            <Input
-                                id="displayName"
-                                className="mt-1 block w-full"
-                                value={data.displayName}
-                                onChange={(e) => setData('displayName', e.target.value)}
-                                required
-                                autoComplete="displayName"
+                                autoComplete="display_name"
                                 placeholder="Display Name"
                             />
 
-                            <InputError className="mt-2" message={errors.name} />
+                            <InputError className="mt-2" message={errors.display_name} />
                         </div>
 
                         <div className="grid gap-2">
                             <Label htmlFor="description">Description</Label>
 
-                            <Input
+                            <Textarea
                                 id="description"
                                 className="mt-1 block w-full"
                                 value={data.description}
