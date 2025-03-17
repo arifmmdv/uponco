@@ -4,8 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Laratrust\Traits\HasRolesAndPermissions;
 use Laratrust\Contracts\LaratrustUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -48,5 +51,43 @@ class User extends Authenticatable implements MustVerifyEmail, LaratrustUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function teamMembers()
+    {
+        return User::whereHas('roles', function ($query) {
+            $query->whereIn('team_id', function ($subquery) {
+                $subquery->select('team_id')
+                    ->from('role_user')
+                    ->where('user_id', $this->id)
+                    ->whereNotNull('team_id');
+            });
+        })->where('id', '!=', $this->id)->get();
+    }
+
+    /**
+     * Get the first team the user is assigned to.
+     *
+     * @return HasOne
+     */
+    public function firstTeam()
+    {
+        $teamId = DB::table('role_user')
+            ->where('user_id', $this->id)
+            ->whereNotNull('team_id')
+            ->value('team_id');
+
+        return $teamId ? Team::find($teamId) : null;
+    }
+
+    /**
+     * Get the team the user is assigned to.
+     *
+     * @return BelongsToMany
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'role_user', 'user_id', 'team_id')
+            ->wherePivot('user_type', User::class);
     }
 }

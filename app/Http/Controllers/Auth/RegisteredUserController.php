@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\User;
@@ -59,7 +60,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $user->addRole('company-owner', $team);
+        $user->addRole(Role::CompanyOwner, $team);
 
         event(new Registered($user));
 

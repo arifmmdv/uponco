@@ -15,14 +15,14 @@ Route::get('/', function () {
 //
 //    $user->addRole($owner, $team);
 //})->name('home');
-//
-//Route::get('/check-role', function () {
+
+Route::get('/check-role', function () {
 //    $team = \App\Models\Team::find(1);
-//    $user = \App\Models\User::find(1);
+    $user = \App\Models\User::find(1);
 //    $owner = \App\Models\Role::where('name', 'company-owner')->first();
-//
-//    return $user->rolesTeams;
-//})->name('home');
+
+    return $user->rolesTeams;
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
@@ -33,7 +33,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::redirect('company', 'company/general');
     Route::get('company/general', [CompanyController::class, 'view'])->name('company.general');
     Route::patch('company/general', [CompanyController::class, 'update'])->name('company.update');
+
     Route::get('company/staff', [CompanyController::class, 'staff'])->name('company.staff');
+    Route::post('company/staff', [CompanyController::class, 'addUser'])->name('company.addUser');
 });
 
 require __DIR__.'/settings.php';
