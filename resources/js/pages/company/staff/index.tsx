@@ -1,7 +1,7 @@
-import { StaffProvider, TeamMember, useStaff } from './staff/StaffContext';
-import { TeamMembersList } from './staff/TeamMembersList';
-import { UserFormDialog } from './staff/UserFormDialog';
-import { DeleteMemberConfirmation } from './staff/DeleteMemberConfirmation';
+import { StaffProvider, TeamMember, useStaff } from './StaffContext';
+import { TeamMembersList } from './TeamMembersList';
+import { UserFormDialog } from './UserFormDialog';
+import { DeleteMemberConfirmation } from './DeleteMemberConfirmation';
 import { Head } from '@inertiajs/react';
 import HeadingSmall from '@/components/heading-small';
 import { type BreadcrumbItem } from '@/types';

@@ -21,7 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('company/staff', [CompanyController::class, 'staff'])->name('company.staff');
     Route::post('company/staff', [CompanyController::class, 'addUser'])->name('company.addUser');
     Route::post('company/staff/update/{id}', [CompanyController::class, 'updateUser'])->name('company.updateUser');
-    Route::post('company/staff/delete', [CompanyController::class, 'deleteUser'])->name('company.deleteUser');
+    Route::post('company/staff/delete/{id}', [CompanyController::class, 'deleteUser'])->name('company.deleteUser');
 });
 
 require __DIR__.'/settings.php';

@@ -61,7 +61,7 @@ class CompanyController extends Controller
     {
         $team = $request->user()->rolesTeams()->first();
         $teamMembers = $request->user()->teamMembers();
-
+        
         // Get all users' roles in this team
         $userRoles = DB::table('role_user')
             ->join('roles', 'role_user.role_id', '=', 'roles.id')
@@ -69,7 +69,7 @@ class CompanyController extends Controller
             ->select('role_user.user_id', 'roles.name as role_name')
             ->get()
             ->keyBy('user_id');
-
+        
         // Enhance each team member with their role
         $teamMembers = $teamMembers->map(function($user) use ($userRoles) {
             $userData = $user->toArray();
@@ -77,9 +77,17 @@ class CompanyController extends Controller
             $userData['id'] = (string)$user->id; // Ensure ID is a string
             return $userData;
         });
-
+        
+        // Get current user role
+        $currentUserRole = DB::table('role_user')
+            ->join('roles', 'role_user.role_id', '=', 'roles.id')
+            ->where('role_user.user_id', $request->user()->id)
+            ->where('role_user.team_id', $team->id)
+            ->value('roles.name');
+        
         return Inertia::render('company/staff', [
-            'teamMembers' => $teamMembers
+            'teamMembers' => $teamMembers,
+            'currentUserRole' => $currentUserRole ?? 'staff'
         ]);
     }
 
@@ -106,9 +114,7 @@ class CompanyController extends Controller
         $user->email = $request->email;
         $user->save();
 
-        // Only update role if it has changed
         if ($request->has('role') && $request->filled('role')) {
-            // Remove current role and add the new one
             $user->removeRole($team);
             $user->addRole($request->role, $team);
         }
@@ -116,20 +122,42 @@ class CompanyController extends Controller
         return to_route('company.staff');
     }
 
-    public function deleteUser(Request $request): RedirectResponse
+    public function deleteUser(Request $request, $id): RedirectResponse
     {
         $team = $request->user()->rolesTeams()->first();
 
-        $request->validate([
-            'id' => 'required|exists:users,id',
-        ]);
+        // Ensure the current user is a company owner
+        $currentUserRole = DB::table('role_user')
+            ->join('roles', 'role_user.role_id', '=', 'roles.id')
+            ->where('role_user.user_id', $request->user()->id)
+            ->where('role_user.team_id', $team->id)
+            ->value('roles.name');
+            
+        if ($currentUserRole !== 'company-owner') {
+            return to_route('company.staff')
+                ->with('error', 'You do not have permission to delete team members.');
+        }
 
-        $user = User::findOrFail($request->id);
+        $user = User::findOrFail($id);
 
-        // Remove user from the team and delete
-        $user->removeRole($team);
+        // Prevent deleting yourself
+        if ($user->id === $request->user()->id) {
+            return to_route('company.staff')
+                ->with('error', 'You cannot delete your own account.');
+        }
+
+        // Get the user's roles for this team using Laratrust's method
+        $roles = $user->getRoles($team);
+            
+        // Remove all user's roles from the team
+        if (!empty($roles)) {
+            $user->removeRoles($roles, $team);
+        }
+        
+        // Delete the user
         $user->delete();
 
-        return to_route('company.staff');
+        return to_route('company.staff')
+            ->with('success', 'Team member has been deleted successfully.');
     }
 }
