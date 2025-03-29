@@ -8,22 +8,6 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-//Route::get('/assign-role', function () {
-//    $team = \App\Models\Team::find(1);
-//    $user = \App\Models\User::find(1);
-//    $owner = \App\Models\Role::where('name', 'company-owner')->first();
-//
-//    $user->addRole($owner, $team);
-//})->name('home');
-
-Route::get('/check-role', function () {
-//    $team = \App\Models\Team::find(1);
-    $user = \App\Models\User::find(1);
-//    $owner = \App\Models\Role::where('name', 'company-owner')->first();
-
-    return $user->rolesTeams;
-})->name('home');
-
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
@@ -36,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('company/staff', [CompanyController::class, 'staff'])->name('company.staff');
     Route::post('company/staff', [CompanyController::class, 'addUser'])->name('company.addUser');
+    Route::post('company/staff/update/{id}', [CompanyController::class, 'updateUser'])->name('company.updateUser');
+    Route::post('company/staff/delete', [CompanyController::class, 'deleteUser'])->name('company.deleteUser');
 });
 
 require __DIR__.'/settings.php';

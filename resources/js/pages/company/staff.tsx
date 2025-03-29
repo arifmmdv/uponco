@@ -25,7 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {FormEventHandler, useRef, useState} from "react";
+import {FormEventHandler, useState} from "react";
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -34,52 +34,107 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface CompanyForm {
+interface TeamMemberForm {
     name: string;
     email: string;
-    password: string;
-    password_confirmation: string;
+    password?: string;
+    password_confirmation?: string;
     role: string;
+    id?: string;
 }
 
 interface TeamMember {
     name: string;
     email: string;
+    role: string;
     id: string;
 }
 
 export default function Staff({ teamMembers }: { teamMembers: TeamMember[] }) {
     const [open, setOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
-    const { data, setData, post, processing, reset, errors, clearErrors } = useForm<Required<CompanyForm>>({
-        name: 'Azer Mammadov',
-        email: 'azer@gmail.com',
-        password: 'Tklm_159753',
-        password_confirmation: 'Tklm_159753',
+    const { data, setData, post, processing, reset, errors, clearErrors } = useForm<Required<TeamMemberForm>>({
+        name: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
         role: 'staff',
+        id: '',
     });
 
     const closeModal = () => {
-        setOpen(false); // Close modal
+        setOpen(false);
         clearErrors();
         reset();
+        setIsEditing(false);
+        setCurrentUserId(null);
     };
 
-    const openModal = () => {
-        setOpen(true); // Open modal
-    };
-
-    const deleteUser: FormEventHandler = (e) => {
-        e.preventDefault();
-
-        post(route('company.addUser'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                closeModal(); // Close modal on success
-            },
-            onError: () => { },
-            onFinish: () => { },
+    const openAddUserModal = () => {
+        setIsEditing(false);
+        setData({
+            name: '',
+            email: '',
+            password: '',
+            password_confirmation: '',
+            role: 'staff',
+            id: '',
         });
+        setOpen(true);
+    };
+
+    const openEditUserModal = (teamMember: TeamMember) => {
+        setIsEditing(true);
+        setCurrentUserId(teamMember.id);
+        setData({
+            name: teamMember.name,
+            email: teamMember.email,
+            role: teamMember.role || 'staff',
+            password: '',
+            password_confirmation: '',
+            id: teamMember.id,
+        });
+        setOpen(true);
+    };
+
+    const submitForm: FormEventHandler = (e) => {
+        e.preventDefault();
+        setSaveSuccess(false);
+
+        if (isEditing && currentUserId) {
+            // Use post method for updating user with ID parameter
+            post(route('company.updateUser', currentUserId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSaveSuccess(true);
+                    setTimeout(() => {
+                        closeModal();
+                        setSaveSuccess(false);
+                    }, 1500);
+                },
+                onError: () => {
+                    console.error('Error updating user:', errors);
+                },
+            });
+        } else {
+            // Existing add user logic
+            post(route('company.addUser'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setSaveSuccess(true);
+                    setTimeout(() => {
+                        closeModal();
+                        setSaveSuccess(false);
+                    }, 1500);
+                },
+                onError: () => {
+                    console.error('Error adding user:', errors);
+                },
+            });
+        }
     };
 
     return (
@@ -92,15 +147,16 @@ export default function Staff({ teamMembers }: { teamMembers: TeamMember[] }) {
 
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger asChild>
-                            <Button variant="default">Add User</Button>
+                            <Button variant="default" onClick={openAddUserModal}>Add User</Button>
                         </DialogTrigger>
                         <DialogContent>
-                            <DialogTitle>Are new user to your company</DialogTitle>
+                            <DialogTitle>{isEditing ? 'Edit User' : 'Add New User'}</DialogTitle>
                             <DialogDescription>
-                                Once your account is deleted, all of its resources and data will also be permanently deleted. Please enter your password
-                                to confirm you would like to permanently delete your account.
+                                {isEditing
+                                    ? 'Update the details of an existing user'
+                                    : 'Add a new user to your company'}
                             </DialogDescription>
-                            <form className="space-y-6" onSubmit={deleteUser}>
+                            <form className="space-y-6" onSubmit={submitForm}>
                                 <div className="grid gap-2">
                                     <Label htmlFor="name">
                                         Name Surname
@@ -139,50 +195,59 @@ export default function Staff({ teamMembers }: { teamMembers: TeamMember[] }) {
 
                                 <div className="grid gap-2">
                                     <Label htmlFor="role">Role</Label>
-                                    <Select>
+                                    <Select
+                                        value={data.role || 'staff'}
+                                        onValueChange={(value) => setData('role', value)}
+                                        defaultValue="staff"
+                                    >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a role" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="staff">Staff</SelectItem>
+                                            <SelectItem value="company-owner">Company Owner</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.role} />
                                 </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password">
-                                        Password
-                                    </Label>
+                                {!isEditing && (
+                                    <>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="password">
+                                                Password
+                                            </Label>
 
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        name="password"
-                                        value={data.password}
-                                        onChange={(e) => setData('password', e.target.value)}
-                                        placeholder="Password"
-                                        autoComplete="current-password"
-                                    />
+                                            <Input
+                                                id="password"
+                                                type="password"
+                                                name="password"
+                                                value={data.password}
+                                                onChange={(e) => setData('password', e.target.value)}
+                                                placeholder="Password"
+                                                autoComplete="current-password"
+                                            />
 
-                                    <InputError message={errors.password} />
-                                </div>
+                                            <InputError message={errors.password} />
+                                        </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="password_confirmation">Confirm password</Label>
-                                    <Input
-                                        id="password_confirmation"
-                                        type="password"
-                                        required
-                                        tabIndex={4}
-                                        autoComplete="new-password"
-                                        value={data.password_confirmation}
-                                        onChange={(e) => setData('password_confirmation', e.target.value)}
-                                        disabled={processing}
-                                        placeholder="Confirm password"
-                                    />
-                                    <InputError message={errors.password_confirmation} />
-                                </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="password_confirmation">Confirm password</Label>
+                                            <Input
+                                                id="password_confirmation"
+                                                type="password"
+                                                required
+                                                tabIndex={4}
+                                                autoComplete="new-password"
+                                                value={data.password_confirmation}
+                                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                                disabled={processing}
+                                                placeholder="Confirm password"
+                                            />
+                                            <InputError message={errors.password_confirmation} />
+                                        </div>
+                                    </>
+                                )}
 
                                 <DialogFooter className="gap-2">
                                     <DialogClose asChild>
@@ -191,8 +256,12 @@ export default function Staff({ teamMembers }: { teamMembers: TeamMember[] }) {
                                         </Button>
                                     </DialogClose>
 
+                                    {saveSuccess && (
+                                        <span className="text-green-600 font-medium">Saved successfully!</span>
+                                    )}
+
                                     <Button variant="default" disabled={processing} asChild>
-                                        <button type="submit">Add User</button>
+                                        <button type="submit">{isEditing ? 'Update User' : 'Add User'}</button>
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -217,14 +286,25 @@ export default function Staff({ teamMembers }: { teamMembers: TeamMember[] }) {
                                                 <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
                                                 {
                                                     teamMembers.map(teamMember => (
-                                                        <tr>
+                                                        <tr key={teamMember.id}>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-800 dark:text-neutral-200">{teamMember.name}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">Cashier</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.role}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.email}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                                                                 <div className="flex justify-end gap-2">
-                                                                    <button type="button" className="inline-flex items-center gap-x-2 text-sm font-medium cursor-pointer rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-hidden focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:text-blue-400">Edit</button>
-                                                                    <button type="button" className="inline-flex items-center gap-x-2 text-sm font-medium cursor-pointer rounded-lg border border-transparent text-red-600 hover:text-red-800 focus:outline-hidden focus:text-red-800 disabled:opacity-50 disabled:pointer-events-none dark:text-red-500 dark:hover:text-red-400 dark:focus:text-red-400">Delete</button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => openEditUserModal(teamMember)}
+                                                                        className="inline-flex items-center gap-x-2 text-sm font-medium cursor-pointer rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-hidden focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:text-blue-400"
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="inline-flex items-center gap-x-2 text-sm font-medium cursor-pointer rounded-lg border border-transparent text-red-600 hover:text-red-800 focus:outline-hidden focus:text-red-800 disabled:opacity-50 disabled:pointer-events-none dark:text-red-500 dark:hover:text-red-400 dark:focus:text-red-400"
+                                                                    >
+                                                                        Delete
+                                                                    </button>
                                                                 </div>
                                                             </td>
                                                         </tr>
