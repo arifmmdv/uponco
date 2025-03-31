@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Validation\Rules;
-use Illuminate\Support\Facades\DB;
+use App\Enums\Role;
 
 class CompanyController extends Controller
 {
@@ -59,35 +59,13 @@ class CompanyController extends Controller
 
     public function staff(Request $request)
     {
-        $team = $request->user()->rolesTeams()->first();
-        $teamMembers = $request->user()->teamMembers();
-        
-        // Get all users' roles in this team
-        $userRoles = DB::table('role_user')
-            ->join('roles', 'role_user.role_id', '=', 'roles.id')
-            ->where('role_user.team_id', $team->id)
-            ->select('role_user.user_id', 'roles.name as role_name')
-            ->get()
-            ->keyBy('user_id');
-        
-        // Enhance each team member with their role
-        $teamMembers = $teamMembers->map(function($user) use ($userRoles) {
-            $userData = $user->toArray();
-            $userData['role'] = $userRoles->get($user->id)->role_name ?? 'staff';
-            $userData['id'] = (string)$user->id; // Ensure ID is a string
-            return $userData;
-        });
-        
-        // Get current user role
-        $currentUserRole = DB::table('role_user')
-            ->join('roles', 'role_user.role_id', '=', 'roles.id')
-            ->where('role_user.user_id', $request->user()->id)
-            ->where('role_user.team_id', $team->id)
-            ->value('roles.name');
-        
+        $currentUserTeam = $request->user()->rolesTeams()->first();
+        $currentUserRoles = $request->user()->getRoles($currentUserTeam);
+        $teamMembers = $currentUserTeam->teamMembers();
+
         return Inertia::render('company/staff', [
             'teamMembers' => $teamMembers,
-            'currentUserRole' => $currentUserRole ?? 'staff'
+            'currentUserRoles' => $currentUserRoles
         ]);
     }
 
@@ -124,38 +102,32 @@ class CompanyController extends Controller
 
     public function deleteUser(Request $request, $id): RedirectResponse
     {
-        $team = $request->user()->rolesTeams()->first();
+        $currentUserTeam = $request->user()->rolesTeams()->first();
+        $currentUserRoles = $request->user()->getRoles($currentUserTeam);
 
-        // Ensure the current user is a company owner
-        $currentUserRole = DB::table('role_user')
-            ->join('roles', 'role_user.role_id', '=', 'roles.id')
-            ->where('role_user.user_id', $request->user()->id)
-            ->where('role_user.team_id', $team->id)
-            ->value('roles.name');
-            
-        if ($currentUserRole !== 'company-owner') {
+        if (in_array(Role::CompanyOwner, $currentUserRoles)) {
             return to_route('company.staff')
                 ->with('error', 'You do not have permission to delete team members.');
         }
 
-        $user = User::findOrFail($id);
+        $userToDelete = User::findOrFail($id);
 
         // Prevent deleting yourself
-        if ($user->id === $request->user()->id) {
+        if ($userToDelete->id === $request->user()->id) {
             return to_route('company.staff')
                 ->with('error', 'You cannot delete your own account.');
         }
 
         // Get the user's roles for this team using Laratrust's method
-        $roles = $user->getRoles($team);
-            
+        $roles = $userToDelete->getRoles($currentUserTeam);
+
         // Remove all user's roles from the team
         if (!empty($roles)) {
-            $user->removeRoles($roles, $team);
+            $userToDelete->removeRoles($roles, $currentUserTeam);
         }
-        
+
         // Delete the user
-        $user->delete();
+        $userToDelete->delete();
 
         return to_route('company.staff')
             ->with('success', 'Team member has been deleted successfully.');

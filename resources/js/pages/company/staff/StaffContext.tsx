@@ -10,23 +10,26 @@ export interface TeamMemberForm {
     id?: string;
 }
 
+export interface TeamMemberRole {
+    name: string;
+}
+
 export interface TeamMember {
+    id: string;
     name: string;
     email: string;
-    role: string;
-    id: string;
+    roles: TeamMemberRole[];
 }
 
 interface StaffContextProps {
-    teamMembers: TeamMember[];
-    currentUserRole?: string;
+    currentUserRoles: string[];
 }
 
 interface StaffContextType {
     // Dialog state
     open: boolean;
     setOpen: (open: boolean) => void;
-    
+
     // Form state
     isEditing: boolean;
     setIsEditing: (isEditing: boolean) => void;
@@ -34,23 +37,23 @@ interface StaffContextType {
     setCurrentUserId: (id: string | null) => void;
     saveSuccess: boolean;
     setSaveSuccess: (success: boolean) => void;
-    
+
     // Delete state
     memberToDelete: TeamMember | null;
     setMemberToDelete: (member: TeamMember | null) => void;
     isDeleteModalOpen: boolean;
     setIsDeleteModalOpen: (open: boolean) => void;
-    
+
     // Role permissions
     canDeleteMembers: boolean;
-    
+
     // Form data and methods
     data: Required<TeamMemberForm>;
     setData: (key: keyof TeamMemberForm, value: string) => void;
     setDataAll: (data: Required<TeamMemberForm>) => void;
     errors: Record<string, string>;
     processing: boolean;
-    
+
     // Actions
     closeModal: () => void;
     openAddUserModal: () => void;
@@ -62,18 +65,18 @@ interface StaffContextType {
 
 const StaffContext = createContext<StaffContextType | undefined>(undefined);
 
-export function StaffProvider({ children, teamMembers, currentUserRole = 'staff' }: StaffContextProps & { children: ReactNode }) {
+export function StaffProvider({ children, currentUserRoles }: StaffContextProps & { children: ReactNode }) {
     const [open, setOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [saveSuccess, setSaveSuccess] = useState(false);
-    
+
     // Delete functionality state
     const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    
+
     // Check if user has permission to delete members
-    const canDeleteMembers = currentUserRole === 'company-owner';
+    const canDeleteMembers = currentUserRoles.includes('company-owner');
 
     const { data, setData: setFormData, post, processing, reset, errors, clearErrors } = useForm<Required<TeamMemberForm>>({
         name: '',
@@ -121,7 +124,7 @@ export function StaffProvider({ children, teamMembers, currentUserRole = 'staff'
         setDataAll({
             name: teamMember.name,
             email: teamMember.email,
-            role: teamMember.role || 'staff',
+            role: 'staff',
             password: '',
             password_confirmation: '',
             id: teamMember.id,
@@ -133,7 +136,7 @@ export function StaffProvider({ children, teamMembers, currentUserRole = 'staff'
         setMemberToDelete(teamMember);
         setIsDeleteModalOpen(true);
     };
-    
+
     const closeDeleteModal = () => {
         setIsDeleteModalOpen(false);
         setMemberToDelete(null);
@@ -216,4 +219,4 @@ export function useStaff() {
         throw new Error('useStaff must be used within a StaffProvider');
     }
     return context;
-} 
+}

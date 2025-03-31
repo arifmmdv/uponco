@@ -3,9 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Company\CompanyController;
+use App\Models\User;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
+})->name('home');
+
+Route::get('/user-roles', function () {
+    $currentUserTeam = User::find(1)->rolesTeams()->first();
+    $teamMembers = $currentUserTeam->teamMembers();
+
+    return response()->json($teamMembers);
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {

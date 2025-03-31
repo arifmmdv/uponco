@@ -31,10 +31,10 @@ export function TeamMembersList({ teamMembers }: TeamMembersListProps) {
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
                                 {teamMembers.map(teamMember => (
-                                    <TeamMemberRow 
-                                        key={teamMember.id} 
-                                        teamMember={teamMember} 
-                                        onEdit={openEditUserModal} 
+                                    <TeamMemberRow
+                                        key={teamMember.id}
+                                        teamMember={teamMember}
+                                        onEdit={openEditUserModal}
                                     />
                                 ))}
                             </tbody>
@@ -53,11 +53,11 @@ interface TeamMemberRowProps {
 
 function TeamMemberRow({ teamMember, onEdit }: TeamMemberRowProps) {
     const { openDeleteModal, canDeleteMembers } = useStaff();
-    
+
     return (
         <tr key={teamMember.id}>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-800 dark:text-neutral-200">{teamMember.name}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.role}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.roles.map(item => item.name).join(' ')}</td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.email}</td>
             <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                 <div className="flex justify-end gap-2">
@@ -81,4 +81,4 @@ function TeamMemberRow({ teamMember, onEdit }: TeamMemberRowProps) {
             </td>
         </tr>
     );
-} 
+}

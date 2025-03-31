@@ -17,19 +17,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface StaffPageProps {
     teamMembers: TeamMember[];
-    currentUserRole?: string;
+    currentUserRoles: string[];
 }
 
-export default function StaffPage({ teamMembers, currentUserRole = 'staff' }: StaffPageProps) {
+export default function StaffPage({ teamMembers, currentUserRoles }: StaffPageProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Company staff" />
-            
+
             <CompanyLayout>
-                <StaffProvider 
-                    teamMembers={teamMembers}
-                    currentUserRole={currentUserRole}
-                >
+                <StaffProvider currentUserRoles={currentUserRoles}>
                     <StaffContent teamMembers={teamMembers} />
                 </StaffProvider>
             </CompanyLayout>
@@ -39,25 +36,25 @@ export default function StaffPage({ teamMembers, currentUserRole = 'staff' }: St
 
 function StaffContent({ teamMembers }: { teamMembers: TeamMember[] }) {
     const { memberToDelete, isDeleteModalOpen, closeDeleteModal } = useStaff();
-    
+
     return (
         <div className="flex flex-col h-full space-y-6">
             <HeadingSmall title="Company staff" description="Add or update your staff" />
-            
+
             <UserFormDialog />
-            
+
             <div className="flex-1 overflow-auto">
                 {teamMembers.length > 0 && (
                     <TeamMembersList teamMembers={teamMembers} />
                 )}
             </div>
-            
+
             {/* Delete confirmation modal */}
-            <DeleteMemberConfirmation 
+            <DeleteMemberConfirmation
                 teamMember={memberToDelete}
                 isOpen={isDeleteModalOpen}
                 onClose={closeDeleteModal}
             />
         </div>
     );
-} 
+}
