@@ -39,11 +39,14 @@ function StaffContent({ teamMembers }: { teamMembers: TeamMember[] }) {
 
     return (
         <div className="flex flex-col h-full space-y-6">
-            <HeadingSmall title="Company staff" description="Add or update your staff" />
 
-            <UserFormDialog />
+            <div className="flex justify-between">
+                <HeadingSmall title="Company staff" description="Add or update your staff" />
 
-            <div className="flex-1 overflow-auto">
+                <UserFormDialog />
+            </div>
+
+            <div className="flex-1">
                 {teamMembers.length > 0 && (
                     <TeamMembersList teamMembers={teamMembers} />
                 )}

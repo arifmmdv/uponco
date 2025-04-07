@@ -34,22 +34,24 @@ class CompanyController extends Controller
         return to_route('company.general');
     }
 
-    public function addUser(Request $request): RedirectResponse
+//    public function addUser(Request $request): RedirectResponse
+    public function addUser(Request $request)
     {
-        $team = $request->user()->rolesTeams()->first();
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        $user->addRole($request->role, $team);
+        return $request->roles;
+//        $team = $request->user()->rolesTeams()->first();
+//        $request->validate([
+//            'name' => 'required|string|max:255',
+//            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+//            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+//        ]);
+//
+//        $user = User::create([
+//            'name' => $request->name,
+//            'email' => $request->email,
+//            'password' => Hash::make($request->password),
+//        ]);
+//
+//        $user->addRole($request->role, $team);
 
 //       Check how to inform user more Laravel way
 //        event(new Registered($user));

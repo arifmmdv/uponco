@@ -20,19 +20,30 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
+const roles = [
+    {
+        name: 'staff',
+        displayName: 'Staff'
+    },
+    {
+        name: 'company-owner',
+        displayName: 'Company Owner'
+    }
+]
+
 export function UserFormDialog() {
-    const { 
-        open, 
-        setOpen, 
-        isEditing, 
-        data, 
-        setData, 
-        errors, 
-        processing, 
-        saveSuccess, 
-        closeModal, 
-        openAddUserModal, 
-        submitForm 
+    const {
+        open,
+        setOpen,
+        isEditing,
+        data,
+        setData,
+        errors,
+        processing,
+        saveSuccess,
+        closeModal,
+        openAddUserModal,
+        submitForm
     } = useStaff();
 
     return (
@@ -51,7 +62,7 @@ export function UserFormDialog() {
                     <NameField />
                     <EmailField />
                     <RoleField />
-                    
+
                     {!isEditing && (
                         <>
                             <PasswordField />
@@ -82,7 +93,7 @@ export function UserFormDialog() {
 
 function NameField() {
     const { data, setData, errors } = useStaff();
-    
+
     return (
         <div className="grid gap-2">
             <Label htmlFor="name">
@@ -106,7 +117,7 @@ function NameField() {
 
 function EmailField() {
     const { data, setData, errors } = useStaff();
-    
+
     return (
         <div className="grid gap-2">
             <Label htmlFor="email">
@@ -130,7 +141,7 @@ function EmailField() {
 
 function RoleField() {
     const { data, setData, errors } = useStaff();
-    
+
     return (
         <div className="grid gap-2">
             <Label htmlFor="role">Role</Label>
@@ -154,7 +165,7 @@ function RoleField() {
 
 function PasswordField() {
     const { data, setData, errors } = useStaff();
-    
+
     return (
         <div className="grid gap-2">
             <Label htmlFor="password">
@@ -178,7 +189,7 @@ function PasswordField() {
 
 function PasswordConfirmationField() {
     const { data, setData, errors, processing } = useStaff();
-    
+
     return (
         <div className="grid gap-2">
             <Label htmlFor="password_confirmation">Confirm password</Label>
@@ -196,4 +207,4 @@ function PasswordConfirmationField() {
             <InputError message={errors.password_confirmation} />
         </div>
     );
-} 
+}

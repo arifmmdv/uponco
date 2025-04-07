@@ -119,6 +119,7 @@ export function StaffProvider({ children, currentUserRoles }: StaffContextProps 
     };
 
     const openEditUserModal = (teamMember: TeamMember) => {
+        console.log(teamMember);
         setIsEditing(true);
         setCurrentUserId(teamMember.id);
         setDataAll({
