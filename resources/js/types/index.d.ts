@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
+import { Permissions } from "@/config/Permissions";
 export * from './company';
 
 export interface Auth {
@@ -21,6 +22,7 @@ export interface NavItem {
     href: string;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    permissions?: Permissions[];
 }
 
 export interface SharedData {
@@ -28,6 +30,7 @@ export interface SharedData {
     quote: { message: string; author: string };
     auth: Auth;
     ziggy: Config & { location: string };
+    permissions: Permissions[];
     [key: string]: unknown;
 }
 

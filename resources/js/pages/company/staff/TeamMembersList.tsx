@@ -1,4 +1,7 @@
-import { TeamMember, useStaff } from './StaffContext';
+import {TeamMember, useStaff} from './StaffContext';
+import {useAccessControl} from "@/hooks/useAccessControl";
+import {Permissions} from "@/config/Permissions";
+import {defaultRoles} from "@/config/Roles";
 
 interface TeamMembersListProps {
     teamMembers: TeamMember[];
@@ -6,6 +9,7 @@ interface TeamMembersListProps {
 
 export function TeamMembersList({ teamMembers }: TeamMembersListProps) {
     const { openEditUserModal } = useStaff();
+    const { hasPermission } = useAccessControl();
 
     if (teamMembers.length === 0) {
         return (
@@ -26,7 +30,9 @@ export function TeamMembersList({ teamMembers }: TeamMembersListProps) {
                                     <th scope="col" className="px-6 py-3 text-start text-sm font-medium text-gray-600 dark:text-neutral-500">Name</th>
                                     <th scope="col" className="px-6 py-3 text-start text-sm font-medium text-gray-600 dark:text-neutral-500">Role</th>
                                     <th scope="col" className="px-6 py-3 text-start text-sm font-medium text-gray-600 dark:text-neutral-500">Email</th>
-                                    <th scope="col" className="px-6 py-3 text-end text-sm font-medium text-gray-600 dark:text-neutral-500">Action</th>
+                                    {(hasPermission(Permissions.EditStaff) || hasPermission(Permissions.DeleteStaff)) && (
+                                        <th scope="col" className="px-6 py-3 text-end text-sm font-medium text-gray-600 dark:text-neutral-500">Action</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
@@ -52,23 +58,32 @@ interface TeamMemberRowProps {
 }
 
 function TeamMemberRow({ teamMember, onEdit }: TeamMemberRowProps) {
-    const { openDeleteModal, canDeleteMembers } = useStaff();
+    const { openDeleteModal } = useStaff();
+    const { hasPermission } = useAccessControl();
+
+    const roles = teamMember.roles.map(item => {
+        const roleLabel = defaultRoles.find(role => role.name === item);
+        return roleLabel?.displayName ?? '';
+    }).join(' ');
 
     return (
         <tr key={teamMember.id}>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-800 dark:text-neutral-200">{teamMember.name}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.roles.map(item => item).join(' ')}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{roles}</td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.email}</td>
+            {(hasPermission(Permissions.EditStaff) || hasPermission(Permissions.DeleteStaff)) && (
             <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                 <div className="flex justify-end gap-2">
-                    <button
-                        type="button"
-                        onClick={() => onEdit(teamMember)}
-                        className="inline-flex items-center gap-x-2 text-sm font-medium cursor-pointer rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-hidden focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:text-blue-400"
-                    >
-                        Edit
-                    </button>
-                    {canDeleteMembers && (
+                    {hasPermission(Permissions.EditStaff) && (
+                        <button
+                            type="button"
+                            onClick={() => onEdit(teamMember)}
+                            className="inline-flex items-center gap-x-2 text-sm font-medium cursor-pointer rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-hidden focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:text-blue-400"
+                        >
+                            Edit
+                        </button>
+                    )}
+                    {hasPermission(Permissions.DeleteStaff) && (
                         <button
                             type="button"
                             onClick={() => openDeleteModal(teamMember)}
@@ -79,6 +94,7 @@ function TeamMemberRow({ teamMember, onEdit }: TeamMemberRowProps) {
                     )}
                 </div>
             </td>
+            )}
         </tr>
     );
 }

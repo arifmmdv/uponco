@@ -10,10 +10,9 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/user-roles', function () {
-    $currentUserTeam = User::find(1)->rolesTeams()->first();
-    $teamMembers = $currentUserTeam->teamMembers();
+    $currentUser = User::find(1);
 
-    return response()->json($teamMembers);
+    return response()->json($currentUser->allPermissions());
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -21,15 +20,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-    // Company
-    Route::redirect('company', 'company/general');
-    Route::get('company/general', [CompanyController::class, 'view'])->name('company.general');
-    Route::patch('company/general', [CompanyController::class, 'update'])->name('company.update');
+    Route::redirect('company', 'company/general')->middleware(['permission:edit-company']);
+    Route::get('company/general', [CompanyController::class, 'view'])
+        ->middleware(['permission:edit-company'])
+        ->name('company.general');
+    Route::patch('company/general', [CompanyController::class, 'update'])
+        ->middleware(['permission:edit-company'])
+        ->name('company.update');
 
-    Route::get('company/staff', [CompanyController::class, 'staff'])->name('company.staff');
-    Route::post('company/staff', [CompanyController::class, 'addUser'])->name('company.addUser');
-    Route::post('company/staff/update/{id}', [CompanyController::class, 'updateUser'])->name('company.updateUser');
-    Route::post('company/staff/delete/{id}', [CompanyController::class, 'deleteUser'])->name('company.deleteUser');
+    Route::get('company/staff', [CompanyController::class, 'staff'])
+        ->middleware(['permission:list-staff'])
+        ->name('company.staff');
+    Route::post('company/staff', [CompanyController::class, 'addUser'])
+        ->middleware(['permission:add-staff'])
+        ->name('company.addUser');
+    Route::post('company/staff/update/{id}', [CompanyController::class, 'updateUser'])
+        ->middleware(['permission:edit-staff'])
+        ->name('company.updateUser');
+    Route::post('company/staff/delete/{id}', [CompanyController::class, 'deleteUser'])
+        ->middleware(['permission:delete-staff'])
+        ->name('company.deleteUser');
 });
 
 require __DIR__.'/settings.php';

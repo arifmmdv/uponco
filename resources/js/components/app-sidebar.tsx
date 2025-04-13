@@ -6,6 +6,8 @@ import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Store } from 'lucide-react';
 import AppLogo from './app-logo';
+import { Permissions } from "@/config/Permissions";
+import {useAccessControl} from "@/hooks/useAccessControl";
 
 const mainNavItems: NavItem[] = [
     {
@@ -17,6 +19,7 @@ const mainNavItems: NavItem[] = [
         title: 'Company',
         href: '/company',
         icon: Store,
+        permissions: [Permissions.EditCompany]
     },
 ];
 
@@ -34,6 +37,10 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { getAccessibleNavItems } = useAccessControl()
+
+    const navItems = getAccessibleNavItems(mainNavItems);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -49,7 +56,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={navItems} />
             </SidebarContent>
 
             <SidebarFooter>

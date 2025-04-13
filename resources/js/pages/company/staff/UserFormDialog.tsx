@@ -1,4 +1,4 @@
-import { useStaff } from './StaffContext';
+import {useStaff} from './StaffContext';
 import {
     Dialog,
     DialogClose,
@@ -8,22 +8,14 @@ import {
     DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
 import InputError from "@/components/input-error";
 import {Checkbox} from "@/components/ui/checkbox";
-
-const roles = [
-    {
-        name: 'staff',
-        displayName: 'Staff'
-    },
-    {
-        name: 'company-owner',
-        displayName: 'Company Owner'
-    }
-]
+import {useAccessControl} from "@/hooks/useAccessControl";
+import {Permissions} from "@/config/Permissions";
+import {defaultRoles} from "@/config/Roles";
 
 export function UserFormDialog() {
     const {
@@ -37,11 +29,15 @@ export function UserFormDialog() {
         submitForm
     } = useStaff();
 
+    const { hasPermission } = useAccessControl();
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="default" onClick={openAddUserModal}>Add User</Button>
-            </DialogTrigger>
+            {hasPermission(Permissions.AddStaff) && (
+                <DialogTrigger asChild>
+                    <Button variant="default" onClick={openAddUserModal}>Add User</Button>
+                </DialogTrigger>
+            )}
             <DialogContent>
                 <DialogTitle>{isEditing ? 'Edit User' : 'Add New User'}</DialogTitle>
                 <DialogDescription>
@@ -151,7 +147,7 @@ function RoleField() {
         <div className="grid gap-2">
             <Label>Roles</Label>
             <div className="flex flex-col gap-2">
-                {roles.map((role) => (
+                {defaultRoles.map((role) => (
                     <div key={role.name} className="flex items-center space-x-2">
                         <Checkbox
                             id={`role-${role.name}`}

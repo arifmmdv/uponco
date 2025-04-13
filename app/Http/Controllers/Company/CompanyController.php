@@ -57,12 +57,10 @@ class CompanyController extends Controller
     public function staff(Request $request)
     {
         $currentUserTeam = $request->user()->rolesTeams()->first();
-        $currentUserRoles = $request->user()->getRoles($currentUserTeam);
         $teamMembers = $currentUserTeam->teamMembers();
 
         return Inertia::render('company/staff', [
             'teamMembers' => $teamMembers,
-            'currentUserRoles' => $currentUserRoles
         ]);
     }
 

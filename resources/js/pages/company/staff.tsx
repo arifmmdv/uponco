@@ -17,16 +17,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface StaffPageProps {
     teamMembers: TeamMember[];
-    currentUserRoles: string[];
 }
 
-export default function StaffPage({ teamMembers, currentUserRoles }: StaffPageProps) {
+export default function StaffPage({ teamMembers }: StaffPageProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Company staff" />
 
             <CompanyLayout>
-                <StaffProvider currentUserRoles={currentUserRoles}>
+                <StaffProvider>
                     <StaffContent teamMembers={teamMembers} />
                 </StaffProvider>
             </CompanyLayout>
