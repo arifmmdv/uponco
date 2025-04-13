@@ -11,10 +11,18 @@ class Team extends LaratrustTeam
 
     public function teamMembers()
     {
-        return User::whereHas('roles', function ($query) {
+        $members = User::whereHas('roles', function ($query) {
             $query->where('team_id', $this->id)->where('id', '!=', Auth::id());
-        })->with(['roles' => function ($query) {
-            $query->select('name'); // Select only the 'name' attribute
-        }])->get();
+        })->with('roles')->get();
+
+        return $members->map(function ($user) {
+            // Create a new array with the desired structure
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->roles->pluck('name')->toArray()
+            ];
+        });
     }
 }

@@ -12,13 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import InputError from "@/components/input-error";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import {Checkbox} from "@/components/ui/checkbox";
 
 const roles = [
     {
@@ -36,9 +30,6 @@ export function UserFormDialog() {
         open,
         setOpen,
         isEditing,
-        data,
-        setData,
-        errors,
         processing,
         saveSuccess,
         closeModal,
@@ -142,23 +133,43 @@ function EmailField() {
 function RoleField() {
     const { data, setData, errors } = useStaff();
 
+    const handleRoleChange = (role: string, checked: boolean) => {
+        let updatedRoles = [...data.roles];
+
+        if (checked) {
+            if (!updatedRoles.includes(role)) {
+                updatedRoles.push(role);
+            }
+        } else {
+            updatedRoles = updatedRoles.filter(r => r !== role);
+        }
+
+        setData('roles', updatedRoles);
+    };
+
     return (
         <div className="grid gap-2">
-            <Label htmlFor="role">Role</Label>
-            <Select
-                value={data.role || 'staff'}
-                onValueChange={(value) => setData('role', value)}
-                defaultValue="staff"
-            >
-                <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="company-owner">Company Owner</SelectItem>
-                </SelectContent>
-            </Select>
-            <InputError message={errors.role} />
+            <Label>Roles</Label>
+            <div className="flex flex-col gap-2">
+                {roles.map((role) => (
+                    <div key={role.name} className="flex items-center space-x-2">
+                        <Checkbox
+                            id={`role-${role.name}`}
+                            checked={data.roles.includes(role.name)}
+                            onCheckedChange={(checked) =>
+                                handleRoleChange(role.name, checked === true)
+                            }
+                        />
+                        <Label
+                            htmlFor={`role-${role.name}`}
+                            className="cursor-pointer"
+                        >
+                            {role.displayName}
+                        </Label>
+                    </div>
+                ))}
+            </div>
+            <InputError message={errors.roles} />
         </div>
     );
 }

@@ -6,19 +6,15 @@ export interface TeamMemberForm {
     email: string;
     password?: string;
     password_confirmation?: string;
-    role: string;
+    roles: string[];
     id?: string;
-}
-
-export interface TeamMemberRole {
-    name: string;
 }
 
 export interface TeamMember {
     id: string;
     name: string;
     email: string;
-    roles: TeamMemberRole[];
+    roles: string[];
 }
 
 interface StaffContextProps {
@@ -49,7 +45,7 @@ interface StaffContextType {
 
     // Form data and methods
     data: Required<TeamMemberForm>;
-    setData: (key: keyof TeamMemberForm, value: string) => void;
+    setData: (key: keyof TeamMemberForm, value: string | string[]) => void;
     setDataAll: (data: Required<TeamMemberForm>) => void;
     errors: Record<string, string>;
     processing: boolean;
@@ -83,11 +79,11 @@ export function StaffProvider({ children, currentUserRoles }: StaffContextProps 
         email: '',
         password: '',
         password_confirmation: '',
-        role: 'staff',
+        roles: ['staff'],
         id: '',
     });
 
-    const setData = (key: keyof TeamMemberForm, value: string) => {
+    const setData = (key: keyof TeamMemberForm, value: string | string[]) => {
         setFormData(key, value);
     };
 
@@ -112,7 +108,7 @@ export function StaffProvider({ children, currentUserRoles }: StaffContextProps 
             email: '',
             password: '',
             password_confirmation: '',
-            role: 'staff',
+            roles: ['staff'],
             id: '',
         });
         setOpen(true);
@@ -125,7 +121,7 @@ export function StaffProvider({ children, currentUserRoles }: StaffContextProps 
         setDataAll({
             name: teamMember.name,
             email: teamMember.email,
-            role: 'staff',
+            roles: teamMember.roles,
             password: '',
             password_confirmation: '',
             id: teamMember.id,

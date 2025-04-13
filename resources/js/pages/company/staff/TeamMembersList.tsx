@@ -57,7 +57,7 @@ function TeamMemberRow({ teamMember, onEdit }: TeamMemberRowProps) {
     return (
         <tr key={teamMember.id}>
             <td className="px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-800 dark:text-neutral-200">{teamMember.name}</td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.roles.map(item => item.name).join(' ')}</td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.roles.map(item => item).join(' ')}</td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-neutral-200">{teamMember.email}</td>
             <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                 <div className="flex justify-end gap-2">

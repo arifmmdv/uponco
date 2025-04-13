@@ -34,27 +34,22 @@ class CompanyController extends Controller
         return to_route('company.general');
     }
 
-//    public function addUser(Request $request): RedirectResponse
     public function addUser(Request $request)
     {
-        return $request->roles;
-//        $team = $request->user()->rolesTeams()->first();
-//        $request->validate([
-//            'name' => 'required|string|max:255',
-//            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-//            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-//        ]);
-//
-//        $user = User::create([
-//            'name' => $request->name,
-//            'email' => $request->email,
-//            'password' => Hash::make($request->password),
-//        ]);
-//
-//        $user->addRole($request->role, $team);
+        $team = $request->user()->rolesTeams()->first();
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
 
-//       Check how to inform user more Laravel way
-//        event(new Registered($user));
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        $user->addRoles($request->roles, $team);
 
         return to_route('company.staff');
     }
@@ -85,7 +80,8 @@ class CompanyController extends Controller
                 'max:255',
                 Rule::unique('users')->ignore($id),
             ],
-            'role' => 'required|string|in:staff,company-owner',
+            'roles' => 'required|array', // Changed to array
+            'roles.*' => 'string|in:staff,company-owner', // Validate each role in the array
         ]);
 
         $user = User::findOrFail($id);
@@ -94,9 +90,10 @@ class CompanyController extends Controller
         $user->email = $request->email;
         $user->save();
 
-        if ($request->has('role') && $request->filled('role')) {
-            $user->removeRole($team);
-            $user->addRole($request->role, $team);
+        if ($request->has('roles') && !empty($request->roles)) {
+            $user->syncRoles([], $team);
+
+            $user->addRoles($request->roles, $team);
         }
 
         return to_route('company.staff');
