@@ -1,0 +1,146 @@
+<?php
+
+use App\Enums\TeamRole;
+use App\Models\Location;
+use App\Models\Team;
+use App\Models\User;
+
+function locationPayload(array $overrides = []): array
+{
+    return array_merge([
+        'is_active' => true,
+        'name' => 'Head Office',
+        'country' => 'US',
+        'city' => 'San Francisco',
+        'street_address' => '123 Market St',
+        'unit' => 'Suite 400',
+        'postal_code' => '94103',
+        'timezone' => 'America/New_York',
+        'phone' => '+1 555 123 4567',
+    ], $overrides);
+}
+
+test('the locations page can be rendered', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this
+        ->actingAs($user)
+        ->get(route('company.locations.index', ['current_team' => $team->slug]))
+        ->assertOk();
+});
+
+test('the company page can be rendered', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this
+        ->actingAs($user)
+        ->get(route('company.index', ['current_team' => $team->slug]))
+        ->assertOk();
+});
+
+test('a location can be created', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('company.locations.store', ['current_team' => $team->slug]), locationPayload());
+
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('locations', [
+        'team_id' => $team->id,
+        'name' => 'Head Office',
+        'country' => 'US',
+        'city' => 'San Francisco',
+        'is_active' => true,
+    ]);
+});
+
+test('creating a location requires valid fields', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('company.locations.store', ['current_team' => $team->slug]), locationPayload([
+            'name' => '',
+            'country' => 'ZZ',
+            'timezone' => 'Not/AZone',
+        ]));
+
+    $response->assertSessionHasErrors(['name', 'country', 'timezone']);
+});
+
+test('a location can be updated', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $location = Location::factory()->for($team)->create(['name' => 'Old Name']);
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(
+            route('company.locations.update', ['current_team' => $team->slug, 'location' => $location->id]),
+            locationPayload(['name' => 'New Name', 'is_active' => false]),
+        );
+
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('locations', [
+        'id' => $location->id,
+        'name' => 'New Name',
+        'is_active' => false,
+    ]);
+});
+
+test('a location can be deleted', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $location = Location::factory()->for($team)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->delete(route('company.locations.destroy', ['current_team' => $team->slug, 'location' => $location->id]));
+
+    $response->assertRedirect();
+
+    $this->assertSoftDeleted('locations', ['id' => $location->id]);
+});
+
+test('a location cannot be updated from another team', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $otherTeam = Team::factory()->create();
+    $otherTeam->members()->attach($user, ['role' => TeamRole::Owner->value]);
+    $foreignLocation = Location::factory()->for($otherTeam)->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(
+            route('company.locations.update', ['current_team' => $team->slug, 'location' => $foreignLocation->id]),
+            locationPayload(),
+        );
+
+    $response->assertForbidden();
+});
+
+test('guests cannot access locations', function () {
+    $team = Team::factory()->create();
+
+    $this
+        ->get(route('company.locations.index', ['current_team' => $team->slug]))
+        ->assertRedirect(route('login'));
+});
+
+test('users cannot access locations for teams they do not belong to', function () {
+    $user = User::factory()->create();
+    $otherTeam = Team::factory()->create();
+
+    $this
+        ->actingAs($user)
+        ->get(route('company.locations.index', ['current_team' => $otherTeam->slug]))
+        ->assertForbidden();
+});

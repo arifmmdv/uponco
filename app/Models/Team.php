@@ -82,6 +82,16 @@ class Team extends Model
     }
 
     /**
+     * Get all locations for this team.
+     *
+     * @return HasMany<Location, $this>
+     */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(Location::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
