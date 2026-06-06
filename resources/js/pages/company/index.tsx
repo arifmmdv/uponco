@@ -1,14 +1,16 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronRight, MapPin } from 'lucide-react';
+import { ChevronRight, MapPin, Wrench } from 'lucide-react';
 
 import Heading from '@/components/heading';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as companyIndex } from '@/routes/company';
 import { index as locationsIndex } from '@/routes/company/locations';
+import { index as servicesIndex } from '@/routes/company/services';
 
 type Props = {
     stats: {
         locations: number;
+        services: number;
     };
 };
 
@@ -23,6 +25,14 @@ export default function CompanyIndex({ stats }: Props) {
             icon: MapPin,
             count: stats.locations,
             href: locationsIndex(teamSlug),
+        },
+        {
+            title: 'Services',
+            description:
+                'Manage the services and categories your company offers.',
+            icon: Wrench,
+            count: stats.services,
+            href: servicesIndex(teamSlug),
         },
     ];
 
@@ -78,7 +88,9 @@ CompanyIndex.layout = (props: { currentTeam?: { slug: string } | null }) => ({
     breadcrumbs: [
         {
             title: 'Company',
-            href: props.currentTeam ? companyIndex(props.currentTeam.slug) : '/',
+            href: props.currentTeam
+                ? companyIndex(props.currentTeam.slug)
+                : '/',
         },
     ],
 });

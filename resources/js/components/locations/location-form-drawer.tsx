@@ -181,7 +181,9 @@ function LocationFormFields({
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="unit">Suite / apartment / unit</Label>
+                            <Label htmlFor="unit">
+                                Suite / apartment / unit
+                            </Label>
                             <Input
                                 id="unit"
                                 name="unit"

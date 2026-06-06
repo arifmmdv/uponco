@@ -97,7 +97,9 @@ LocationsIndex.layout = (props: { currentTeam?: { slug: string } | null }) => ({
     breadcrumbs: [
         {
             title: 'Company',
-            href: props.currentTeam ? companyIndex(props.currentTeam.slug) : '/',
+            href: props.currentTeam
+                ? companyIndex(props.currentTeam.slug)
+                : '/',
         },
         {
             title: 'Locations',

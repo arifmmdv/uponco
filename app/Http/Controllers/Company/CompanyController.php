@@ -19,6 +19,7 @@ class CompanyController extends Controller
         return Inertia::render('company/index', [
             'stats' => [
                 'locations' => $team->locations()->count(),
+                'services' => $team->services()->count(),
             ],
         ]);
     }

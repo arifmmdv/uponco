@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['name', 'slug', 'is_personal'])]
@@ -89,6 +90,26 @@ class Team extends Model
     public function locations(): HasMany
     {
         return $this->hasMany(Location::class);
+    }
+
+    /**
+     * Get all service categories for this team.
+     *
+     * @return HasMany<ServiceCategory, $this>
+     */
+    public function serviceCategories(): HasMany
+    {
+        return $this->hasMany(ServiceCategory::class);
+    }
+
+    /**
+     * Get all services for this team through their categories.
+     *
+     * @return HasManyThrough<Service, ServiceCategory, $this>
+     */
+    public function services(): HasManyThrough
+    {
+        return $this->hasManyThrough(Service::class, ServiceCategory::class);
     }
 
     /**
