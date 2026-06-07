@@ -36,6 +36,50 @@ class SaveLocationRequest extends FormRequest
             'postal_code' => ['required', 'string', 'max:32'],
             'timezone' => ['required', 'string', Rule::in(timezone_identifiers_list())],
             'phone' => ['nullable', 'string', 'max:32'],
+            'service_ids' => ['array'],
+            'service_ids.*' => [
+                Rule::in($this->user()->currentTeam->services()->pluck('services.id')->all()),
+            ],
+            'user_ids' => ['array'],
+            'user_ids.*' => [
+                Rule::exists('team_members', 'user_id')->where(
+                    fn ($query) => $query->where('team_id', $this->user()->currentTeam->id),
+                ),
+            ],
         ];
+    }
+
+    /**
+     * Get the validated location attributes without relationship ids.
+     *
+     * @return array<string, mixed>
+     */
+    public function locationData(): array
+    {
+        $data = $this->validated();
+
+        unset($data['service_ids'], $data['user_ids']);
+
+        return $data;
+    }
+
+    /**
+     * Get the service ids the location should be assigned to.
+     *
+     * @return array<int, int>
+     */
+    public function serviceIds(): array
+    {
+        return array_map('intval', $this->validated('service_ids', []));
+    }
+
+    /**
+     * Get the specialist user ids the location should be assigned to.
+     *
+     * @return array<int, int>
+     */
+    public function specialistIds(): array
+    {
+        return array_map('intval', $this->validated('user_ids', []));
     }
 }

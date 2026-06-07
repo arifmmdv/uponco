@@ -13,12 +13,16 @@ import type { Location, SelectOption } from '@/types';
 
 type Props = {
     locations: Location[];
+    services: SelectOption[];
+    specialists: SelectOption[];
     countries: SelectOption[];
     timezones: SelectOption[];
 };
 
 export default function LocationsIndex({
     locations,
+    services,
+    specialists,
     countries,
     timezones,
 }: Props) {
@@ -79,6 +83,8 @@ export default function LocationsIndex({
                 onOpenChange={setFormOpen}
                 location={editing}
                 teamSlug={teamSlug}
+                services={services}
+                specialists={specialists}
                 countries={countries}
                 timezones={timezones}
             />

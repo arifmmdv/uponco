@@ -56,4 +56,14 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->belongsToMany(Service::class)->withTimestamps();
     }
+
+    /**
+     * Get the locations this user works at as a specialist.
+     *
+     * @return BelongsToMany<Location, $this>
+     */
+    public function locations(): BelongsToMany
+    {
+        return $this->belongsToMany(Location::class)->withTimestamps();
+    }
 }

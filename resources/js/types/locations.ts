@@ -9,6 +9,8 @@ export type Location = {
     postal_code: string;
     timezone: string;
     phone: string | null;
+    service_ids: number[];
+    user_ids: number[];
 };
 
 export type SelectOption = {

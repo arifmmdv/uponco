@@ -5,6 +5,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import {
@@ -24,6 +25,8 @@ type Props = {
     onOpenChange: (open: boolean) => void;
     location: Location | null;
     teamSlug: string;
+    services: SelectOption[];
+    specialists: SelectOption[];
     countries: SelectOption[];
     timezones: SelectOption[];
 };
@@ -33,6 +36,8 @@ export default function LocationFormDrawer({
     onOpenChange,
     location,
     teamSlug,
+    services,
+    specialists,
     countries,
     timezones,
 }: Props) {
@@ -59,6 +64,8 @@ export default function LocationFormDrawer({
                     key={location?.id ?? 'new'}
                     location={location}
                     teamSlug={teamSlug}
+                    services={services}
+                    specialists={specialists}
                     countries={countries}
                     timezones={timezones}
                     onSuccess={() => onOpenChange(false)}
@@ -72,6 +79,8 @@ export default function LocationFormDrawer({
 type FieldsProps = {
     location: Location | null;
     teamSlug: string;
+    services: SelectOption[];
+    specialists: SelectOption[];
     countries: SelectOption[];
     timezones: SelectOption[];
     onSuccess: () => void;
@@ -81,6 +90,8 @@ type FieldsProps = {
 function LocationFormFields({
     location,
     teamSlug,
+    services,
+    specialists,
     countries,
     timezones,
     onSuccess,
@@ -91,6 +102,12 @@ function LocationFormFields({
     const [isActive, setIsActive] = useState(location?.is_active ?? true);
     const [country, setCountry] = useState(location?.country ?? '');
     const [timezone, setTimezone] = useState(location?.timezone ?? '');
+    const [serviceIds, setServiceIds] = useState<string[]>(
+        location?.service_ids.map((id) => id.toString()) ?? [],
+    );
+    const [specialistIds, setSpecialistIds] = useState<string[]>(
+        location?.user_ids.map((id) => id.toString()) ?? [],
+    );
 
     return (
         <Form
@@ -111,6 +128,22 @@ function LocationFormFields({
                     />
                     <input type="hidden" name="country" value={country} />
                     <input type="hidden" name="timezone" value={timezone} />
+                    {serviceIds.map((id) => (
+                        <input
+                            key={`service-${id}`}
+                            type="hidden"
+                            name="service_ids[]"
+                            value={id}
+                        />
+                    ))}
+                    {specialistIds.map((id) => (
+                        <input
+                            key={`specialist-${id}`}
+                            type="hidden"
+                            name="user_ids[]"
+                            value={id}
+                        />
+                    ))}
 
                     <div className="flex-1 space-y-5 px-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -229,6 +262,44 @@ function LocationFormFields({
                                 placeholder="+1 (555) 123-4567"
                             />
                             <InputError message={errors.phone} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="service_ids">Services</Label>
+                            <MultiSelect
+                                id="service_ids"
+                                options={services}
+                                value={serviceIds}
+                                onChange={setServiceIds}
+                                placeholder="Select services"
+                                searchPlaceholder="Search services…"
+                                emptyMessage="No services found."
+                                invalid={Boolean(errors.service_ids)}
+                                data-test="location-services-select"
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Services offered at this location.
+                            </p>
+                            <InputError message={errors.service_ids} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="user_ids">Specialists</Label>
+                            <MultiSelect
+                                id="user_ids"
+                                options={specialists}
+                                value={specialistIds}
+                                onChange={setSpecialistIds}
+                                placeholder="Select specialists"
+                                searchPlaceholder="Search specialists…"
+                                emptyMessage="No specialists found."
+                                invalid={Boolean(errors.user_ids)}
+                                data-test="location-specialists-select"
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Team members who work at this location.
+                            </p>
+                            <InputError message={errors.user_ids} />
                         </div>
                     </div>
 

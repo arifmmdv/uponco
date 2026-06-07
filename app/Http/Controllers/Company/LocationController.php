@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Company;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Locations\SaveLocationRequest;
 use App\Models\Location;
+use App\Models\Service;
 use App\Models\Team;
+use App\Models\User;
 use App\Support\LocationOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,9 +25,24 @@ class LocationController extends Controller
 
         return Inertia::render('company/locations/index', [
             'locations' => $team->locations()
+                ->with(['services:id', 'specialists:id'])
                 ->orderBy('name')
                 ->get()
                 ->map(fn (Location $location): array => $this->toLocationArray($location)),
+            'services' => $team->services()
+                ->orderBy('title')
+                ->get()
+                ->map(fn (Service $service): array => [
+                    'value' => (string) $service->id,
+                    'label' => $service->title,
+                ]),
+            'specialists' => $team->members()
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $member): array => [
+                    'value' => (string) $member->id,
+                    'label' => $member->name,
+                ]),
             'countries' => LocationOptions::countries(),
             'timezones' => LocationOptions::timezones(),
         ]);
@@ -36,7 +53,10 @@ class LocationController extends Controller
      */
     public function store(SaveLocationRequest $request): RedirectResponse
     {
-        $request->user()->currentTeam->locations()->create($request->validated());
+        $location = $request->user()->currentTeam->locations()->create($request->locationData());
+
+        $location->services()->sync($request->serviceIds());
+        $location->specialists()->sync($request->specialistIds());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Location created.')]);
 
@@ -50,7 +70,10 @@ class LocationController extends Controller
     {
         $this->authorizeLocation($request, $location);
 
-        $location->update($request->validated());
+        $location->update($request->locationData());
+
+        $location->services()->sync($request->serviceIds());
+        $location->specialists()->sync($request->specialistIds());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Location updated.')]);
 
@@ -100,6 +123,8 @@ class LocationController extends Controller
             'postal_code' => $location->postal_code,
             'timezone' => $location->timezone,
             'phone' => $location->phone,
+            'service_ids' => $location->services->pluck('id')->all(),
+            'user_ids' => $location->specialists->pluck('id')->all(),
         ];
     }
 }

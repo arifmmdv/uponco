@@ -48,6 +48,16 @@ class Location extends Model
     }
 
     /**
+     * Get the users (specialists) who work at this location.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function specialists(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
