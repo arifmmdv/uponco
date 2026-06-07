@@ -5,6 +5,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import {
     Sheet,
@@ -33,6 +34,8 @@ type Props = {
     defaultCategoryId: number | null;
     teamSlug: string;
     categories: ServiceCategory[];
+    locations: SelectOption[];
+    specialists: SelectOption[];
     priceTypes: SelectOption[];
     serviceTypes: SelectOption[];
     deliveryTypes: SelectOption[];
@@ -46,6 +49,8 @@ export default function ServiceFormDrawer({
     defaultCategoryId,
     teamSlug,
     categories,
+    locations,
+    specialists,
     priceTypes,
     serviceTypes,
     deliveryTypes,
@@ -76,6 +81,8 @@ export default function ServiceFormDrawer({
                     defaultCategoryId={defaultCategoryId}
                     teamSlug={teamSlug}
                     categories={categories}
+                    locations={locations}
+                    specialists={specialists}
                     priceTypes={priceTypes}
                     serviceTypes={serviceTypes}
                     deliveryTypes={deliveryTypes}
@@ -93,6 +100,8 @@ type FieldsProps = {
     defaultCategoryId: number | null;
     teamSlug: string;
     categories: ServiceCategory[];
+    locations: SelectOption[];
+    specialists: SelectOption[];
     priceTypes: SelectOption[];
     serviceTypes: SelectOption[];
     deliveryTypes: SelectOption[];
@@ -106,6 +115,8 @@ function ServiceFormFields({
     defaultCategoryId,
     teamSlug,
     categories,
+    locations,
+    specialists,
     priceTypes,
     serviceTypes,
     deliveryTypes,
@@ -132,6 +143,12 @@ function ServiceFormFields({
     );
     const [meetingProvider, setMeetingProvider] = useState(
         service?.online_meeting_provider ?? '',
+    );
+    const [locationIds, setLocationIds] = useState<string[]>(
+        service?.location_ids.map((id) => id.toString()) ?? [],
+    );
+    const [specialistIds, setSpecialistIds] = useState<string[]>(
+        service?.user_ids.map((id) => id.toString()) ?? [],
     );
 
     const categoryOptions: SelectOption[] = categories.map((category) => ({
@@ -179,6 +196,22 @@ function ServiceFormFields({
                             value={meetingProvider}
                         />
                     )}
+                    {locationIds.map((id) => (
+                        <input
+                            key={`location-${id}`}
+                            type="hidden"
+                            name="location_ids[]"
+                            value={id}
+                        />
+                    ))}
+                    {specialistIds.map((id) => (
+                        <input
+                            key={`specialist-${id}`}
+                            type="hidden"
+                            name="user_ids[]"
+                            value={id}
+                        />
+                    ))}
 
                     <div className="flex-1 space-y-5 px-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -397,6 +430,44 @@ function ServiceFormFields({
                                 rows={4}
                             />
                             <InputError message={errors.description} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="location_ids">Locations</Label>
+                            <MultiSelect
+                                id="location_ids"
+                                options={locations}
+                                value={locationIds}
+                                onChange={setLocationIds}
+                                placeholder="Select locations"
+                                searchPlaceholder="Search locations…"
+                                emptyMessage="No locations found."
+                                invalid={Boolean(errors.location_ids)}
+                                data-test="service-locations-select"
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Branches where this service is offered.
+                            </p>
+                            <InputError message={errors.location_ids} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="user_ids">Specialists</Label>
+                            <MultiSelect
+                                id="user_ids"
+                                options={specialists}
+                                value={specialistIds}
+                                onChange={setSpecialistIds}
+                                placeholder="Select specialists"
+                                searchPlaceholder="Search specialists…"
+                                emptyMessage="No specialists found."
+                                invalid={Boolean(errors.user_ids)}
+                                data-test="service-specialists-select"
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Team members who provide this service.
+                            </p>
+                            <InputError message={errors.user_ids} />
                         </div>
                     </div>
 

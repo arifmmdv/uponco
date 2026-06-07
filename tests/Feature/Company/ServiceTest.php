@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\TeamRole;
+use App\Models\Location;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\Team;
@@ -240,6 +241,82 @@ test('a service can be updated', function () {
         ->assertRedirect();
 
     $this->assertDatabaseHas('services', ['id' => $service->id, 'title' => 'New']);
+});
+
+test('a service can be created with assigned locations and specialists', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $category = ServiceCategory::factory()->for($team)->create();
+    $location = Location::factory()->for($team)->create();
+    $specialist = User::factory()->create();
+    $team->members()->attach($specialist, ['role' => TeamRole::Member->value]);
+
+    $this
+        ->actingAs($user)
+        ->post(
+            route('company.services.store', ['current_team' => $team->slug]),
+            servicePayload($category->id, [
+                'location_ids' => [$location->id],
+                'user_ids' => [$specialist->id],
+            ]),
+        )
+        ->assertRedirect();
+
+    $service = Service::firstWhere('title', 'Haircut');
+
+    expect($service->locations->pluck('id')->all())->toEqual([$location->id]);
+    expect($service->specialists->pluck('id')->all())->toEqual([$specialist->id]);
+});
+
+test('updating a service re-syncs locations and specialists', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $category = ServiceCategory::factory()->for($team)->create();
+    $service = Service::factory()->for($category, 'category')->create();
+
+    $oldLocation = Location::factory()->for($team)->create();
+    $newLocation = Location::factory()->for($team)->create();
+    $service->locations()->attach($oldLocation);
+
+    $this
+        ->actingAs($user)
+        ->patch(
+            route('company.services.update', ['current_team' => $team->slug, 'service' => $service->id]),
+            servicePayload($category->id, ['location_ids' => [$newLocation->id]]),
+        )
+        ->assertRedirect();
+
+    expect($service->locations()->pluck('locations.id')->all())->toEqual([$newLocation->id]);
+});
+
+test('a service cannot be assigned a location from another team', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $category = ServiceCategory::factory()->for($team)->create();
+    $foreignLocation = Location::factory()->create();
+
+    $this
+        ->actingAs($user)
+        ->post(
+            route('company.services.store', ['current_team' => $team->slug]),
+            servicePayload($category->id, ['location_ids' => [$foreignLocation->id]]),
+        )
+        ->assertSessionHasErrors(['location_ids.0']);
+});
+
+test('a service cannot be assigned a specialist who is not a team member', function () {
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+    $category = ServiceCategory::factory()->for($team)->create();
+    $stranger = User::factory()->create();
+
+    $this
+        ->actingAs($user)
+        ->post(
+            route('company.services.store', ['current_team' => $team->slug]),
+            servicePayload($category->id, ['user_ids' => [$stranger->id]]),
+        )
+        ->assertSessionHasErrors(['user_ids.0']);
 });
 
 test('a service can be deleted', function () {

@@ -16,6 +16,8 @@ import type { SelectOption, Service, ServiceCategory } from '@/types';
 type Props = {
     categories: ServiceCategory[];
     services: Service[];
+    locations: SelectOption[];
+    specialists: SelectOption[];
     priceTypes: SelectOption[];
     serviceTypes: SelectOption[];
     deliveryTypes: SelectOption[];
@@ -25,6 +27,8 @@ type Props = {
 export default function ServicesIndex({
     categories,
     services,
+    locations,
+    specialists,
     priceTypes,
     serviceTypes,
     deliveryTypes,
@@ -141,6 +145,8 @@ export default function ServicesIndex({
                 defaultCategoryId={defaultCategoryId}
                 teamSlug={teamSlug}
                 categories={categories}
+                locations={locations}
+                specialists={specialists}
                 priceTypes={priceTypes}
                 serviceTypes={serviceTypes}
                 deliveryTypes={deliveryTypes}

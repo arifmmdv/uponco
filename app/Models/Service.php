@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -41,6 +42,26 @@ class Service extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ServiceCategory::class, 'service_category_id');
+    }
+
+    /**
+     * Get the locations (branches) where this service is offered.
+     *
+     * @return BelongsToMany<Location, $this>
+     */
+    public function locations(): BelongsToMany
+    {
+        return $this->belongsToMany(Location::class)->withTimestamps();
+    }
+
+    /**
+     * Get the users (specialists) who provide this service.
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function specialists(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
     }
 
     /**

@@ -23,4 +23,6 @@ export type Service = {
     online_meeting_provider: string | null;
     capacity: number | null;
     description: string | null;
+    location_ids: number[];
+    user_ids: number[];
 };

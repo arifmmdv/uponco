@@ -68,6 +68,18 @@ class SaveServiceRequest extends FormRequest
             ],
             'capacity' => ['nullable', 'required_if:service_type,group', 'integer', 'min:1', 'max:10000'],
             'description' => ['nullable', 'string', 'max:5000'],
+            'location_ids' => ['array'],
+            'location_ids.*' => [
+                Rule::exists('locations', 'id')->where(
+                    fn ($query) => $query->where('team_id', $this->user()->currentTeam->id),
+                ),
+            ],
+            'user_ids' => ['array'],
+            'user_ids.*' => [
+                Rule::exists('team_members', 'user_id')->where(
+                    fn ($query) => $query->where('team_id', $this->user()->currentTeam->id),
+                ),
+            ],
         ];
     }
 
@@ -79,6 +91,8 @@ class SaveServiceRequest extends FormRequest
     public function serviceData(): array
     {
         $data = $this->validated();
+
+        unset($data['location_ids'], $data['user_ids']);
 
         if ($data['price_type'] !== PriceType::Fixed->value) {
             $data['price'] = null;
@@ -98,5 +112,25 @@ class SaveServiceRequest extends FormRequest
         }
 
         return $data;
+    }
+
+    /**
+     * Get the location ids the service should be assigned to.
+     *
+     * @return array<int, int>
+     */
+    public function locationIds(): array
+    {
+        return array_map('intval', $this->validated('location_ids', []));
+    }
+
+    /**
+     * Get the specialist user ids the service should be assigned to.
+     *
+     * @return array<int, int>
+     */
+    public function specialistIds(): array
+    {
+        return array_map('intval', $this->validated('user_ids', []));
     }
 }

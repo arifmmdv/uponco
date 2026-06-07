@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Company;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Services\SaveServiceRequest;
+use App\Models\Location;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\Team;
+use App\Models\User;
 use App\Support\ServiceOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,9 +33,24 @@ class ServiceController extends Controller
                     'name' => $category->name,
                 ]),
             'services' => $team->services()
+                ->with(['locations:id', 'specialists:id'])
                 ->orderBy('title')
                 ->get()
                 ->map(fn (Service $service): array => $this->toServiceArray($service)),
+            'locations' => $team->locations()
+                ->orderBy('name')
+                ->get()
+                ->map(fn (Location $location): array => [
+                    'value' => (string) $location->id,
+                    'label' => $location->name,
+                ]),
+            'specialists' => $team->members()
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $member): array => [
+                    'value' => (string) $member->id,
+                    'label' => $member->name,
+                ]),
             'priceTypes' => ServiceOptions::priceTypes(),
             'serviceTypes' => ServiceOptions::serviceTypes(),
             'deliveryTypes' => ServiceOptions::deliveryTypes(),
@@ -46,7 +63,10 @@ class ServiceController extends Controller
      */
     public function store(SaveServiceRequest $request): RedirectResponse
     {
-        Service::create($request->serviceData());
+        $service = Service::create($request->serviceData());
+
+        $service->locations()->sync($request->locationIds());
+        $service->specialists()->sync($request->specialistIds());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Service created.')]);
 
@@ -61,6 +81,9 @@ class ServiceController extends Controller
         $this->authorizeService($request, $service);
 
         $service->update($request->serviceData());
+
+        $service->locations()->sync($request->locationIds());
+        $service->specialists()->sync($request->specialistIds());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Service updated.')]);
 
@@ -115,6 +138,8 @@ class ServiceController extends Controller
             'online_meeting_provider' => $service->online_meeting_provider,
             'capacity' => $service->capacity,
             'description' => $service->description,
+            'location_ids' => $service->locations->pluck('id')->all(),
+            'user_ids' => $service->specialists->pluck('id')->all(),
         ];
     }
 }
