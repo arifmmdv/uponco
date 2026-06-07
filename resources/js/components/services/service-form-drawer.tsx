@@ -62,9 +62,9 @@ export default function ServiceFormDrawer({
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent
                 side="right"
-                className="w-full overflow-y-auto sm:max-w-md"
+                className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
             >
-                <SheetHeader>
+                <SheetHeader className="shrink-0 border-b">
                     <SheetTitle>
                         {isEditing ? 'Edit service' : 'Add service'}
                     </SheetTitle>
@@ -163,7 +163,7 @@ function ServiceFormFields({
                 : store.form(teamSlug))}
             options={{ preserveScroll: true }}
             onSuccess={onSuccess}
-            className="flex flex-1 flex-col"
+            className="flex min-h-0 flex-1 flex-col"
             disableWhileProcessing
         >
             {({ errors, processing }) => (
@@ -213,7 +213,7 @@ function ServiceFormFields({
                         />
                     ))}
 
-                    <div className="flex-1 space-y-5 px-4">
+                    <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <div className="space-y-0.5">
                                 <Label htmlFor="is_active">Active</Label>
@@ -471,7 +471,7 @@ function ServiceFormFields({
                         </div>
                     </div>
 
-                    <SheetFooter className="flex-row justify-end gap-2">
+                    <SheetFooter className="shrink-0 flex-row justify-end gap-2 border-t">
                         <Button
                             type="button"
                             variant="secondary"
