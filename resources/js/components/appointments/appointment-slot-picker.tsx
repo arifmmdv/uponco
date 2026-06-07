@@ -75,7 +75,7 @@ export default function AppointmentSlotPicker({
                                     'rounded-md border px-2 py-2 text-sm transition-colors',
                                     'hover:border-ring disabled:cursor-not-allowed disabled:line-through disabled:opacity-40 disabled:hover:border-input',
                                     selectedStart === slot.start &&
-                                        'border-primary bg-primary text-primary-foreground hover:border-primary',
+                                        'border-primary bg-primary-gradient text-primary-foreground hover:border-primary',
                                 )}
                             >
                                 {slot.label}
