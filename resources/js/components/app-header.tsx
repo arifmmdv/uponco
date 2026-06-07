@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     Building2,
+    CalendarDays,
     Folder,
     LayoutGrid,
     Menu,
@@ -43,6 +44,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as appointments } from '@/routes/appointments';
 import { index as company } from '@/routes/company';
 import { index as customers } from '@/routes/customers';
 import type { BreadcrumbItem, NavItem } from '@/types';
@@ -82,6 +84,11 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
         },
         ...(currentTeam
             ? [
+                  {
+                      title: 'Appointments',
+                      href: appointments(currentTeam.slug),
+                      icon: CalendarDays,
+                  },
                   {
                       title: 'Customers',
                       href: customers(currentTeam.slug),

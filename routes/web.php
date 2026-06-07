@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Company\LocationController;
 use App\Http\Controllers\Company\ServiceCategoryController;
@@ -15,6 +16,11 @@ Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+        Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+        Route::patch('appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+        Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
 
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');

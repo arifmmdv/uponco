@@ -103,6 +103,16 @@ class Team extends Model
     }
 
     /**
+     * Get all appointments for this team.
+     *
+     * @return HasMany<Appointment, $this>
+     */
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    /**
      * Get all service categories for this team.
      *
      * @return HasMany<ServiceCategory, $this>

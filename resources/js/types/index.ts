@@ -1,3 +1,4 @@
+export type * from './appointments';
 export type * from './auth';
 export type * from './customers';
 export type * from './locations';
