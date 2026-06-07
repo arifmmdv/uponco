@@ -93,6 +93,16 @@ class Team extends Model
     }
 
     /**
+     * Get all customers for this team.
+     *
+     * @return HasMany<Customer, $this>
+     */
+    public function customers(): HasMany
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    /**
      * Get all service categories for this team.
      *
      * @return HasMany<ServiceCategory, $this>

@@ -6,6 +6,7 @@ import {
     LayoutGrid,
     Menu,
     Search,
+    Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -43,6 +44,7 @@ import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as company } from '@/routes/company';
+import { index as customers } from '@/routes/customers';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -80,6 +82,11 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
         },
         ...(currentTeam
             ? [
+                  {
+                      title: 'Customers',
+                      href: customers(currentTeam.slug),
+                      icon: Users,
+                  },
                   {
                       title: 'Company',
                       href: company(currentTeam.slug),

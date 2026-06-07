@@ -4,6 +4,7 @@ use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Company\LocationController;
 use App\Http\Controllers\Company\ServiceCategoryController;
 use App\Http\Controllers\Company\ServiceController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,11 @@ Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+        Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
+        Route::patch('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+        Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
         Route::get('company', [CompanyController::class, 'index'])->name('company.index');
 
