@@ -9,12 +9,18 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { index as teams } from '@/routes/teams';
+import { edit as editWorkHours } from '@/routes/work-hours';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
         href: edit(),
+        icon: null,
+    },
+    {
+        title: 'Work hours',
+        href: editWorkHours(),
         icon: null,
     },
     {
