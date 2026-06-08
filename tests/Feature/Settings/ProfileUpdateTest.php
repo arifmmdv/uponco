@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Profile;
 use App\Models\User;
 
 test('profile page is displayed', function () {
@@ -12,74 +13,79 @@ test('profile page is displayed', function () {
     $response->assertOk();
 });
 
+test('profile page prefills the name from the account when no profile exists', function () {
+    $user = User::factory()->create(['name' => 'Jane Doe']);
+
+    $this
+        ->actingAs($user)
+        ->get(route('profile.edit'))
+        ->assertInertia(fn ($page) => $page
+            ->component('settings/profile')
+            ->where('profile.name', 'Jane Doe')
+            ->where('profile.email', null)
+        );
+});
+
+test('profile information can be created', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => 'Public Name',
+            'email' => 'public@example.com',
+            'phone' => '+1 555 000 1111',
+            'job_title' => 'Senior Stylist',
+            'description' => 'Booking with me is easy.',
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    $profile = $user->refresh()->profile;
+
+    expect($profile)->not->toBeNull();
+    expect($profile->name)->toBe('Public Name');
+    expect($profile->email)->toBe('public@example.com');
+    expect($profile->job_title)->toBe('Senior Stylist');
+});
+
 test('profile information can be updated', function () {
     $user = User::factory()->create();
+    Profile::factory()->for($user)->create(['name' => 'Old Name']);
 
-    $response = $this
+    $this
         ->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+            'name' => 'New Name',
+        ])
+        ->assertSessionHasNoErrors();
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('profile.edit'));
-
-    $user->refresh();
-
-    expect($user->name)->toBe('Test User');
-    expect($user->email)->toBe('test@example.com');
-    expect($user->email_verified_at)->toBeNull();
+    expect($user->refresh()->profile->name)->toBe('New Name');
+    expect(Profile::where('user_id', $user->id)->count())->toBe(1);
 });
 
-test('email verification status is unchanged when the email address is unchanged', function () {
+test('public email is not required', function () {
     $user = User::factory()->create();
 
-    $response = $this
+    $this
         ->actingAs($user)
         ->patch(route('profile.update'), [
-            'name' => 'Test User',
-            'email' => $user->email,
-        ]);
+            'name' => 'Public Name',
+        ])
+        ->assertSessionHasNoErrors();
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('profile.edit'));
-
-    expect($user->refresh()->email_verified_at)->not->toBeNull();
+    expect($user->refresh()->profile->email)->toBeNull();
 });
 
-test('user can delete their account', function () {
+test('name is required', function () {
     $user = User::factory()->create();
 
-    $response = $this
+    $this
         ->actingAs($user)
-        ->delete(route('profile.destroy'), [
-            'password' => 'password',
-        ]);
-
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('home'));
-
-    $this->assertGuest();
-    expect($user->fresh())->toBeNull();
-});
-
-test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->from(route('profile.edit'))
-        ->delete(route('profile.destroy'), [
-            'password' => 'wrong-password',
-        ]);
-
-    $response
-        ->assertSessionHasErrors('password')
-        ->assertRedirect(route('profile.edit'));
-
-    expect($user->fresh())->not->toBeNull();
+        ->patch(route('profile.update'), [
+            'name' => '',
+        ])
+        ->assertSessionHasErrors('name');
 });

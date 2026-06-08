@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Concerns\PasswordValidationRules;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ProfileUpdateRequest extends FormRequest
+class AccountDeleteRequest extends FormRequest
 {
+    use PasswordValidationRules;
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -15,11 +18,7 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['nullable', 'string', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:255'],
-            'job_title' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:2000'],
+            'password' => $this->currentPasswordRules(),
         ];
     }
 }

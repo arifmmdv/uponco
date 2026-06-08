@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
-import { edit } from '@/routes/profile';
+import { edit as editAccount } from '@/routes/account';
+import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { index as teams } from '@/routes/teams';
 import { edit as editWorkHours } from '@/routes/work-hours';
@@ -13,8 +14,13 @@ import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
     {
+        title: 'Account',
+        href: editAccount(),
+        icon: null,
+    },
+    {
         title: 'Profile',
-        href: edit(),
+        href: editProfile(),
         icon: null,
     },
     {

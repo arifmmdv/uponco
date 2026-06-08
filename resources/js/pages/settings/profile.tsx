@@ -1,29 +1,23 @@
-import { Form, Head, usePage } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/phone-input';
+import { Textarea } from '@/components/ui/textarea';
 import { edit } from '@/routes/profile';
-import { send } from '@/routes/verification';
-import type { Auth } from '@/types';
 
-type PageProps = {
-    auth: Auth;
+type ProfileData = {
+    name: string;
+    email: string | null;
+    phone: string | null;
+    job_title: string | null;
+    description: string | null;
 };
 
-export default function Profile({
-    mustVerifyEmail,
-    status,
-}: {
-    mustVerifyEmail: boolean;
-    status?: string;
-}) {
-    const { auth } = usePage<PageProps>().props;
-
+export default function Profile({ profile }: { profile: ProfileData }) {
     return (
         <>
             <Head title="Profile settings" />
@@ -34,7 +28,7 @@ export default function Profile({
                 <Heading
                     variant="small"
                     title="Profile"
-                    description="Update your name and email address"
+                    description="Public information shown to customers when they book with you"
                 />
 
                 <Form
@@ -52,11 +46,11 @@ export default function Profile({
                                 <Input
                                     id="name"
                                     className="mt-1 block w-full"
-                                    defaultValue={auth.user.name}
+                                    defaultValue={profile.name}
                                     name="name"
                                     required
                                     autoComplete="name"
-                                    placeholder="Full name"
+                                    placeholder="Public display name"
                                 />
 
                                 <InputError
@@ -66,18 +60,21 @@ export default function Profile({
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Public email</Label>
 
                                 <Input
                                     id="email"
                                     type="email"
                                     className="mt-1 block w-full"
-                                    defaultValue={auth.user.email}
+                                    defaultValue={profile.email ?? ''}
                                     name="email"
-                                    required
-                                    autoComplete="username"
-                                    placeholder="Email address"
+                                    placeholder="Contact email shown to customers"
                                 />
+
+                                <p className="text-sm text-muted-foreground">
+                                    This can differ from the email you use to
+                                    sign in.
+                                </p>
 
                                 <InputError
                                     className="mt-2"
@@ -85,30 +82,54 @@ export default function Profile({
                                 />
                             </div>
 
-                            {mustVerifyEmail &&
-                                auth.user.email_verified_at === null && (
-                                    <div>
-                                        <p className="-mt-4 text-sm text-muted-foreground">
-                                            Your email address is unverified.{' '}
-                                            <Link
-                                                href={send()}
-                                                as="button"
-                                                className="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                                            >
-                                                Click here to re-send the
-                                                verification email.
-                                            </Link>
-                                        </p>
+                            <div className="grid gap-2">
+                                <Label htmlFor="phone">Phone</Label>
 
-                                        {status ===
-                                            'verification-link-sent' && (
-                                            <div className="mt-2 text-sm font-medium text-green-600">
-                                                A new verification link has been
-                                                sent to your email address.
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                <PhoneInput
+                                    id="phone"
+                                    name="phone"
+                                    defaultValue={profile.phone ?? ''}
+                                    placeholder="Contact phone number"
+                                />
+
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.phone}
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="job_title">Job title</Label>
+
+                                <Input
+                                    id="job_title"
+                                    className="mt-1 block w-full"
+                                    defaultValue={profile.job_title ?? ''}
+                                    name="job_title"
+                                    placeholder="e.g. Senior Stylist"
+                                />
+
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.job_title}
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="description">Description</Label>
+
+                                <Textarea
+                                    id="description"
+                                    name="description"
+                                    defaultValue={profile.description ?? ''}
+                                    placeholder="Tell customers about yourself and your work"
+                                />
+
+                                <InputError
+                                    className="mt-2"
+                                    message={errors.description}
+                                />
+                            </div>
 
                             <div className="flex items-center gap-4">
                                 <Button
@@ -122,8 +143,6 @@ export default function Profile({
                     )}
                 </Form>
             </div>
-
-            <DeleteUser />
         </>
     );
 }

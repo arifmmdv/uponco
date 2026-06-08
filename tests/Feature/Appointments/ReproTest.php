@@ -32,10 +32,13 @@ test('REPRO double POST same slot', function () {
         'start_at' => $slot['start'], 'customer_name' => 'Jane', 'customer_email' => 'jane@example.com',
     ];
 
-    $r1 = $this->actingAs($user)->post(route('appointments.store', ['current_team' => $team->slug]), $payload);
-    dump('first response status: '.$r1->status().' errors: '.json_encode(session('errors')?->all()));
+    $this->actingAs($user)
+        ->post(route('appointments.store', ['current_team' => $team->slug]), $payload)
+        ->assertSessionHasNoErrors();
 
-    $r2 = $this->actingAs($user)->post(route('appointments.store', ['current_team' => $team->slug]), $payload);
-    dump('second response errors: '.json_encode(session('errors')?->all()));
-    dump('appointment count: '.Appointment::count());
+    $this->actingAs($user)
+        ->post(route('appointments.store', ['current_team' => $team->slug]), $payload)
+        ->assertSessionHasErrors('start_at');
+
+    expect(Appointment::count())->toBe(1);
 });

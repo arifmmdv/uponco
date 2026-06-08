@@ -6,14 +6,14 @@ use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
-trait ProfileValidationRules
+trait AccountValidationRules
 {
     /**
-     * Get the validation rules used to validate user profiles.
+     * Get the validation rules used to validate user accounts.
      *
      * @return array<string, array<int, ValidationRule|array<mixed>|string>>
      */
-    protected function profileRules(?int $userId = null): array
+    protected function accountRules(?int $userId = null): array
     {
         return [
             'name' => $this->nameRules(),
