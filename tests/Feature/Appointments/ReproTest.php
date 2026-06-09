@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
 test('REPRO double POST same slot', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
+    $team->update(['timezone' => 'America/New_York']);
     $category = ServiceCategory::factory()->for($team)->create();
     $service = Service::factory()->for($category, 'category')->create([
         'duration' => 60, 'technical_break' => 0, 'delivery_type' => 'onsite',
@@ -25,7 +26,7 @@ test('REPRO double POST same slot', function () {
         WorkHour::factory()->for($user)->create(['day_of_week' => $d, 'start_time' => '09:00', 'end_time' => '17:00']);
     }
     $date = CarbonImmutable::now('America/New_York')->addWeek()->startOfWeek()->format('Y-m-d');
-    $slot = collect(SlotGenerator::generate($service, $location, $user, $date))->firstWhere('label', '09:00');
+    $slot = collect(SlotGenerator::generate($service, $user, $team->timezone, $date))->firstWhere('label', '09:00');
 
     $payload = [
         'service_id' => $service->id, 'location_id' => $location->id, 'specialist_id' => $user->id,

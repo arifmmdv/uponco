@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Appointments;
 
+use App\Enums\DeliveryType;
 use App\Models\Appointment;
 use App\Models\Location;
 use App\Models\Service;
@@ -49,7 +50,7 @@ class SaveAppointmentRequest extends FormRequest
                 ),
             ],
             'location_id' => [
-                'required',
+                'nullable',
                 Rule::exists('locations', 'id')->where(fn ($query) => $query->where('team_id', $teamId)),
             ],
             'specialist_id' => [
@@ -88,14 +89,7 @@ class SaveAppointmentRequest extends FormRequest
             }
 
             $service = $this->service();
-            $location = $this->location();
             $specialist = $this->specialist();
-
-            if (! $service->locations()->whereKey($location->id)->exists()) {
-                $validator->errors()->add('location_id', __('This service is not offered at the selected location.'));
-
-                return;
-            }
 
             if (! $service->specialists()->whereKey($specialist->id)->exists()) {
                 $validator->errors()->add('specialist_id', __('The selected specialist does not provide this service.'));
@@ -103,16 +97,32 @@ class SaveAppointmentRequest extends FormRequest
                 return;
             }
 
-            if (! $location->specialists()->whereKey($specialist->id)->exists()) {
-                $validator->errors()->add('specialist_id', __('The selected specialist does not work at this location.'));
+            if ($service->delivery_type === DeliveryType::Onsite) {
+                $location = $this->location();
 
-                return;
+                if (! $location instanceof Location) {
+                    $validator->errors()->add('location_id', __('Select a location for this service.'));
+
+                    return;
+                }
+
+                if (! $service->locations()->whereKey($location->id)->exists()) {
+                    $validator->errors()->add('location_id', __('This service is not offered at the selected location.'));
+
+                    return;
+                }
+
+                if (! $location->specialists()->whereKey($specialist->id)->exists()) {
+                    $validator->errors()->add('specialist_id', __('The selected specialist does not work at this location.'));
+
+                    return;
+                }
             }
 
             $available = SlotGenerator::isAvailableStart(
                 $service,
-                $location,
                 $specialist,
+                $this->teamTimezone(),
                 $this->startAt(),
                 $this->route('appointment')?->id,
             );
@@ -132,11 +142,23 @@ class SaveAppointmentRequest extends FormRequest
     }
 
     /**
-     * Get the selected location.
+     * Get the selected location, if one was provided.
      */
-    public function location(): Location
+    public function location(): ?Location
     {
-        return Location::findOrFail($this->integer('location_id'));
+        if (! $this->filled('location_id')) {
+            return null;
+        }
+
+        return Location::find($this->integer('location_id'));
+    }
+
+    /**
+     * Get the timezone used to interpret work hours and slots.
+     */
+    public function teamTimezone(): string
+    {
+        return $this->user()->currentTeam->timezone ?: config('app.timezone');
     }
 
     /**
@@ -167,7 +189,7 @@ class SaveAppointmentRequest extends FormRequest
 
         return [
             'service_id' => $service->id,
-            'location_id' => $this->integer('location_id'),
+            'location_id' => $this->location()?->id,
             'specialist_id' => $this->integer('specialist_id'),
             'start_at' => $startAt,
             'end_at' => $startAt->addMinutes($service->duration),

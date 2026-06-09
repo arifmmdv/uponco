@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Teams;
 
+use App\Enums\BusinessCategory;
 use App\Rules\TeamName;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SaveTeamRequest extends FormRequest
 {
@@ -17,6 +19,8 @@ class SaveTeamRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', new TeamName],
+            'timezone' => ['nullable', 'string', Rule::in(timezone_identifiers_list())],
+            'business_category' => ['nullable', 'string', Rule::in(BusinessCategory::values())],
         ];
     }
 }

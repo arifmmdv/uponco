@@ -32,7 +32,6 @@ import type {
 
 export type SlotRequest = {
     serviceId: number;
-    locationId: number;
     specialistId: number;
     date: string;
     appointmentId: number | null;
@@ -43,6 +42,7 @@ type Props = {
     onOpenChange: (open: boolean) => void;
     appointment: Appointment | null;
     teamSlug: string;
+    timezone: string;
     services: AppointmentServiceOption[];
     locations: AppointmentLocationOption[];
     specialists: AppointmentSpecialistOption[];
@@ -56,6 +56,7 @@ export default function AppointmentFormDrawer({
     onOpenChange,
     appointment,
     teamSlug,
+    timezone,
     services,
     locations,
     specialists,
@@ -86,6 +87,7 @@ export default function AppointmentFormDrawer({
                     key={appointment?.id ?? 'new'}
                     appointment={appointment}
                     teamSlug={teamSlug}
+                    timezone={timezone}
                     services={services}
                     locations={locations}
                     specialists={specialists}
@@ -103,6 +105,7 @@ export default function AppointmentFormDrawer({
 type FieldsProps = {
     appointment: Appointment | null;
     teamSlug: string;
+    timezone: string;
     services: AppointmentServiceOption[];
     locations: AppointmentLocationOption[];
     specialists: AppointmentSpecialistOption[];
@@ -116,6 +119,7 @@ type FieldsProps = {
 function AppointmentFormFields({
     appointment,
     teamSlug,
+    timezone,
     services,
     locations,
     specialists,
@@ -128,19 +132,13 @@ function AppointmentFormFields({
     const isEditing = appointment !== null;
     const appointmentId = appointment?.id ?? null;
 
-    const initialDate = useMemo(() => {
-        if (!appointment) {
-            return '';
-        }
-
-        const location = locations.find(
-            (item) => item.id === appointment.location_id,
-        );
-
-        return location
-            ? toDateInputValue(appointment.start_at, location.timezone)
-            : '';
-    }, [appointment, locations]);
+    const initialDate = useMemo(
+        () =>
+            appointment
+                ? toDateInputValue(appointment.start_at, timezone)
+                : '',
+        [appointment, timezone],
+    );
 
     const [serviceId, setServiceId] = useState<number | null>(
         appointment?.service_id ?? null,
@@ -179,6 +177,14 @@ function AppointmentFormFields({
         [availableServices],
     );
 
+    const selectedService = useMemo(
+        () => services.find((item) => item.id === serviceId) ?? null,
+        [services, serviceId],
+    );
+
+    // Online services are not tied to a branch, so the location step is hidden.
+    const showLocation = selectedService?.delivery_type !== 'online';
+
     const locationOptions = useMemo(
         () =>
             availableLocations.map((location) => ({
@@ -197,12 +203,12 @@ function AppointmentFormFields({
         [availableSpecialists],
     );
 
-    const selectionIncomplete =
-        serviceId === null || locationId === null || specialistId === null;
+    // Slots depend only on the specialist's work hours, the service duration
+    // and the team timezone, so a location is not required to generate them.
+    const selectionIncomplete = serviceId === null || specialistId === null;
 
     const requestSlots = (next: {
         serviceId: number | null;
-        locationId: number | null;
         specialistId: number | null;
         date: string;
     }) => {
@@ -210,13 +216,11 @@ function AppointmentFormFields({
 
         if (
             next.serviceId !== null &&
-            next.locationId !== null &&
             next.specialistId !== null &&
             next.date !== ''
         ) {
             onRequestSlots({
                 serviceId: next.serviceId,
-                locationId: next.locationId,
                 specialistId: next.specialistId,
                 date: next.date,
                 appointmentId,
@@ -252,7 +256,6 @@ function AppointmentFormFields({
         setSpecialistId(nextSpecialistId);
         requestSlots({
             serviceId: nextServiceId,
-            locationId: nextLocationId,
             specialistId: nextSpecialistId,
             date,
         });
@@ -286,7 +289,6 @@ function AppointmentFormFields({
         setSpecialistId(nextSpecialistId);
         requestSlots({
             serviceId: nextServiceId,
-            locationId: nextLocationId,
             specialistId: nextSpecialistId,
             date,
         });
@@ -322,7 +324,6 @@ function AppointmentFormFields({
         setLocationId(nextLocationId);
         requestSlots({
             serviceId: nextServiceId,
-            locationId: nextLocationId,
             specialistId: nextSpecialistId,
             date,
         });
@@ -330,7 +331,7 @@ function AppointmentFormFields({
 
     const handleDateChange = (value: string) => {
         setDate(value);
-        requestSlots({ serviceId, locationId, specialistId, date: value });
+        requestSlots({ serviceId, specialistId, date: value });
     };
 
     return (
@@ -380,21 +381,23 @@ function AppointmentFormFields({
                             <InputError message={errors.service_id} />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="location_id">Location</Label>
-                            <SearchableSelect
-                                id="location_id"
-                                options={locationOptions}
-                                value={locationId?.toString() ?? ''}
-                                onChange={handleLocationChange}
-                                placeholder="Select a location"
-                                searchPlaceholder="Search locations…"
-                                emptyMessage="No locations available."
-                                invalid={Boolean(errors.location_id)}
-                                data-test="appointment-location-select"
-                            />
-                            <InputError message={errors.location_id} />
-                        </div>
+                        {showLocation && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="location_id">Location</Label>
+                                <SearchableSelect
+                                    id="location_id"
+                                    options={locationOptions}
+                                    value={locationId?.toString() ?? ''}
+                                    onChange={handleLocationChange}
+                                    placeholder="Select a location"
+                                    searchPlaceholder="Search locations…"
+                                    emptyMessage="No locations available."
+                                    invalid={Boolean(errors.location_id)}
+                                    data-test="appointment-location-select"
+                                />
+                                <InputError message={errors.location_id} />
+                            </div>
+                        )}
 
                         <div className="grid gap-2">
                             <Label htmlFor="specialist_id">Specialist</Label>

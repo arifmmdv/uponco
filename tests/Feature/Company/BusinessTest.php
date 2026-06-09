@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\BusinessCategory;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
@@ -56,6 +57,43 @@ test('the team name can be updated by owners', function () {
         'id' => $team->id,
         'name' => 'Updated Name',
     ]);
+});
+
+test('the timezone and business category can be updated by owners', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+
+    $this
+        ->actingAs($user)
+        ->patch(businessRoute('company.business.update', $team), [
+            'name' => $team->name,
+            'timezone' => 'Europe/London',
+            'business_category' => BusinessCategory::Hairdresser->value,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('teams', [
+        'id' => $team->id,
+        'timezone' => 'Europe/London',
+        'business_category' => BusinessCategory::Hairdresser->value,
+    ]);
+});
+
+test('an invalid timezone or business category is rejected', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
+
+    $this
+        ->actingAs($user)
+        ->patch(businessRoute('company.business.update', $team), [
+            'name' => $team->name,
+            'timezone' => 'Not/AZone',
+            'business_category' => 'not-a-category',
+        ])
+        ->assertSessionHasErrors(['timezone', 'business_category']);
 });
 
 test('the team name cannot be updated by members', function () {

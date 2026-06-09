@@ -19,6 +19,7 @@ function bookableSetup(array $serviceOverrides = []): array
 {
     $user = User::factory()->create();
     $team = $user->currentTeam;
+    $team->update(['timezone' => 'UTC']);
 
     $category = ServiceCategory::factory()->for($team)->create();
     $service = Service::factory()->for($category, 'category')->create(array_merge([
@@ -117,8 +118,8 @@ test('the slot generator produces available times within work hours', function (
 
     $slots = SlotGenerator::generate(
         $setup['service'],
-        $setup['location'],
         $setup['user'],
+        $setup['team']->timezone,
         $setup['startAt']->format('Y-m-d'),
     );
 
@@ -146,8 +147,8 @@ test('the slot generator disables already booked times for the specialist', func
 
     $slots = SlotGenerator::generate(
         $setup['service'],
-        $setup['location'],
         $setup['user'],
+        $setup['team']->timezone,
         $setup['startAt']->format('Y-m-d'),
     );
 
@@ -173,7 +174,7 @@ test('a booked slot cannot be double booked for the specialist', function () {
         ->assertSessionHasErrors('start_at');
 });
 
-test('an appointment requires a service, location and specialist', function () {
+test('an appointment requires a service, specialist and start time', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
@@ -183,7 +184,37 @@ test('an appointment requires a service, location and specialist', function () {
             'customer_name' => 'Jane Doe',
             'customer_email' => 'jane@example.com',
         ])
-        ->assertSessionHasErrors(['service_id', 'location_id', 'specialist_id', 'start_at']);
+        ->assertSessionHasErrors(['service_id', 'specialist_id', 'start_at']);
+});
+
+test('an onsite appointment requires a location', function () {
+    $setup = bookableSetup();
+
+    $this
+        ->actingAs($setup['user'])
+        ->post(route('appointments.store', ['current_team' => $setup['team']->slug]), appointmentPayload($setup, [
+            'location_id' => null,
+        ]))
+        ->assertSessionHasErrors('location_id');
+});
+
+test('an online appointment can be created without a location', function () {
+    $setup = bookableSetup(['delivery_type' => 'online', 'online_meeting_provider' => 'google_meet']);
+
+    $this
+        ->actingAs($setup['user'])
+        ->post(route('appointments.store', ['current_team' => $setup['team']->slug]), appointmentPayload($setup, [
+            'location_id' => null,
+        ]))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('appointments', [
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => null,
+        'delivery_type' => 'online',
+    ]);
 });
 
 test('an appointment rejects a specialist who does not provide the service', function () {

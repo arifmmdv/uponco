@@ -78,7 +78,7 @@ export default function AppointmentsTable({
                             </TableCell>
                             <TableCell>{appointment.service.title}</TableCell>
                             <TableCell className="text-muted-foreground">
-                                {appointment.location.name}
+                                {appointment.location?.name ?? 'Online'}
                             </TableCell>
                             <TableCell>{appointment.customer.name}</TableCell>
                             <TableCell className="text-right">

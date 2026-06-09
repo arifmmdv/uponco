@@ -3,7 +3,6 @@
 namespace App\Support\Appointments;
 
 use App\Models\Appointment;
-use App\Models\Location;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -14,10 +13,9 @@ use Illuminate\Support\Collection;
  * Generates bookable time slots for a service/location/specialist on a given day.
  *
  * The work hours stored against a specialist are wall-clock times that are
- * interpreted in the location's (branch) timezone. Slots are produced in that
- * timezone and exposed as UTC instants so they can be stored and compared
- * consistently. This class is shared between the dashboard and the future
- * public booking page.
+ * interpreted in the team's timezone. Slots are produced in that timezone and
+ * exposed as UTC instants so they can be stored and compared consistently.
+ * This class is shared between the dashboard and the future public booking page.
  */
 class SlotGenerator
 {
@@ -27,20 +25,20 @@ class SlotGenerator
      * Each slot is returned as:
      * - start: ISO-8601 UTC instant of the slot start
      * - end: ISO-8601 UTC instant of the slot end (start + service duration)
-     * - label: wall-clock start time (HH:MM) in the location timezone
+     * - label: wall-clock start time (HH:MM) in the team timezone
      * - available: whether the slot can be booked (not in the past, not taken)
      *
      * @return array<int, array{start: string, end: string, label: string, available: bool}>
      */
     public static function generate(
         Service $service,
-        Location $location,
         User $specialist,
+        string $timezone,
         string $date,
         ?int $ignoreAppointmentId = null,
         ?CarbonImmutable $now = null,
     ): array {
-        $timezone = $location->timezone ?: config('app.timezone');
+        $timezone = $timezone ?: config('app.timezone');
 
         $day = CarbonImmutable::createFromFormat('Y-m-d', $date, $timezone)->startOfDay();
         $now ??= CarbonImmutable::now($timezone);
@@ -94,18 +92,18 @@ class SlotGenerator
      */
     public static function isAvailableStart(
         Service $service,
-        Location $location,
         User $specialist,
+        string $timezone,
         CarbonInterface $startAt,
         ?int $ignoreAppointmentId = null,
         ?CarbonImmutable $now = null,
     ): bool {
-        $timezone = $location->timezone ?: config('app.timezone');
+        $timezone = $timezone ?: config('app.timezone');
         $date = $startAt->copy()->setTimezone($timezone)->format('Y-m-d');
 
         $target = CarbonImmutable::parse($startAt)->utc()->toIso8601String();
 
-        foreach (static::generate($service, $location, $specialist, $date, $ignoreAppointmentId, $now) as $slot) {
+        foreach (static::generate($service, $specialist, $timezone, $date, $ignoreAppointmentId, $now) as $slot) {
             if ($slot['start'] === $target) {
                 return $slot['available'];
             }

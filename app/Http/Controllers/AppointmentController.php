@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Appointments\SaveAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Customer;
-use App\Models\Location;
 use App\Models\Service;
 use App\Models\Team;
 use App\Models\User;
@@ -24,13 +23,15 @@ class AppointmentController extends Controller
     public function index(Request $request): Response
     {
         $team = $request->user()->currentTeam;
+        $timezone = $team->timezone ?: config('app.timezone');
 
         return Inertia::render('appointments/index', [
+            'timezone' => $timezone,
             'appointments' => $team->appointments()
-                ->with(['service:id,title', 'location:id,name,timezone', 'specialist:id,name', 'customer:id,name,email,phone'])
+                ->with(['service:id,title', 'location:id,name', 'specialist:id,name', 'customer:id,name,email,phone'])
                 ->orderBy('start_at')
                 ->get()
-                ->map(fn (Appointment $appointment): array => $this->toAppointmentArray($appointment)),
+                ->map(fn (Appointment $appointment): array => $this->toAppointmentArray($appointment, $timezone)),
             'services' => AppointmentOptions::services($team),
             'locations' => AppointmentOptions::locations($team),
             'specialists' => AppointmentOptions::specialists($team),
@@ -122,24 +123,22 @@ class AppointmentController extends Controller
     {
         $data = $request->validate([
             'service_id' => ['required', 'integer'],
-            'location_id' => ['required', 'integer'],
             'specialist_id' => ['required', 'integer'],
             'date' => ['required', 'date_format:Y-m-d'],
             'appointment_id' => ['nullable', 'integer'],
         ]);
 
         $service = $team->services()->whereKey($data['service_id'])->first();
-        $location = $team->locations()->whereKey($data['location_id'])->first();
         $specialist = $team->members()->whereKey($data['specialist_id'])->first();
 
-        if (! $service instanceof Service || ! $location instanceof Location || ! $specialist instanceof User) {
+        if (! $service instanceof Service || ! $specialist instanceof User) {
             return [];
         }
 
         return SlotGenerator::generate(
             $service,
-            $location,
             $specialist,
+            $team->timezone ?: config('app.timezone'),
             $data['date'],
             $data['appointment_id'] ?? null,
         );
@@ -158,22 +157,22 @@ class AppointmentController extends Controller
      *
      * @return array<string, mixed>
      */
-    protected function toAppointmentArray(Appointment $appointment): array
+    protected function toAppointmentArray(Appointment $appointment, string $timezone): array
     {
         return [
             'id' => $appointment->id,
             'start_at' => $appointment->start_at->toIso8601String(),
             'end_at' => $appointment->end_at->toIso8601String(),
-            'timezone' => $appointment->location->timezone,
+            'timezone' => $timezone,
             'notes' => $appointment->notes,
             'service' => [
                 'id' => $appointment->service->id,
                 'title' => $appointment->service->title,
             ],
-            'location' => [
+            'location' => $appointment->location ? [
                 'id' => $appointment->location->id,
                 'name' => $appointment->location->name,
-            ],
+            ] : null,
             'specialist' => [
                 'id' => $appointment->specialist->id,
                 'name' => $appointment->specialist->name,

@@ -5,6 +5,8 @@ export type Team = {
     name: string;
     slug: string;
     isPersonal: boolean;
+    timezone?: string | null;
+    businessCategory?: string | null;
     role?: TeamRole;
     roleLabel?: string;
     isCurrent?: boolean;

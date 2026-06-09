@@ -43,7 +43,7 @@ class AppointmentOptions
     /**
      * Get the team's locations, including their service and specialist relationships.
      *
-     * @return array<int, array{id: int, name: string, timezone: string, service_ids: array<int, int>, specialist_ids: array<int, int>}>
+     * @return array<int, array{id: int, name: string, service_ids: array<int, int>, specialist_ids: array<int, int>}>
      */
     public static function locations(Team $team): array
     {
@@ -55,7 +55,6 @@ class AppointmentOptions
             ->map(fn (Location $location): array => [
                 'id' => $location->id,
                 'name' => $location->name,
-                'timezone' => $location->timezone,
                 'service_ids' => $location->services->pluck('id')->all(),
                 'specialist_ids' => $location->specialists->pluck('id')->all(),
             ])

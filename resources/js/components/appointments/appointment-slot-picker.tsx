@@ -13,7 +13,7 @@ type Props = {
     loading: boolean;
     selectedStart: string;
     onSelectSlot: (start: string) => void;
-    /** True until a service, location and specialist are all chosen. */
+    /** True until a service and specialist are both chosen. */
     selectionIncomplete: boolean;
     error?: string;
 };
@@ -44,8 +44,7 @@ export default function AppointmentSlotPicker({
             <div className="mt-1">
                 {selectionIncomplete ? (
                     <p className="text-sm text-muted-foreground">
-                        Select a service, location and specialist to see
-                        available times.
+                        Select a service and specialist to see available times.
                     </p>
                 ) : !date ? (
                     <p className="text-sm text-muted-foreground">

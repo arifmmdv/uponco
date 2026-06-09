@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Company;
 
+use App\Enums\BusinessCategory;
 use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Company\DeleteBusinessRequest;
 use App\Http\Requests\Teams\SaveTeamRequest;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\LocationOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +30,8 @@ class BusinessController extends Controller
         return Inertia::render('company/business/general', [
             'team' => $this->toTeamArray($team),
             'permissions' => $user->toTeamPermissions($team),
+            'timezones' => LocationOptions::timezones(),
+            'businessCategories' => BusinessCategory::options(),
         ]);
     }
 
@@ -43,7 +47,7 @@ class BusinessController extends Controller
         DB::transaction(function () use ($request, $team): void {
             $locked = Team::whereKey($team->id)->lockForUpdate()->firstOrFail();
 
-            $locked->update(['name' => $request->validated('name')]);
+            $locked->update($request->validated());
         });
 
         $team->refresh();
@@ -116,7 +120,7 @@ class BusinessController extends Controller
     /**
      * Transform a team into its array representation for the frontend.
      *
-     * @return array{id: int, name: string, slug: string, isPersonal: bool}
+     * @return array{id: int, name: string, slug: string, isPersonal: bool, timezone: ?string, businessCategory: ?string}
      */
     protected function toTeamArray(Team $team): array
     {
@@ -125,6 +129,8 @@ class BusinessController extends Controller
             'name' => $team->name,
             'slug' => $team->slug,
             'isPersonal' => $team->is_personal,
+            'timezone' => $team->timezone,
+            'businessCategory' => $team->business_category?->value,
         ];
     }
 }

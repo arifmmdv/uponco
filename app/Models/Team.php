@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\GeneratesUniqueTeamSlugs;
+use App\Enums\BusinessCategory;
 use App\Enums\TeamRole;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'slug', 'is_personal'])]
+#[Fillable(['name', 'slug', 'is_personal', 'timezone', 'business_category'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
@@ -141,6 +142,7 @@ class Team extends Model
     {
         return [
             'is_personal' => 'boolean',
+            'business_category' => BusinessCategory::class,
         ];
     }
 

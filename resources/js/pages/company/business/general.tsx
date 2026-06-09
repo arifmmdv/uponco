@@ -7,20 +7,32 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { index as companyIndex } from '@/routes/company';
 import { edit as editBusiness } from '@/routes/company/business';
-import type { Team, TeamPermissions } from '@/types';
+import type { SelectOption, Team, TeamPermissions } from '@/types';
 
 type Props = {
     team: Team;
     permissions: TeamPermissions;
+    timezones: SelectOption[];
+    businessCategories: SelectOption[];
 };
 
-export default function BusinessGeneral({ team, permissions }: Props) {
+export default function BusinessGeneral({
+    team,
+    permissions,
+    timezones,
+    businessCategories,
+}: Props) {
     const { currentTeam } = usePage().props;
     const teamSlug = currentTeam?.slug ?? '';
 
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [timezone, setTimezone] = useState(team.timezone ?? '');
+    const [businessCategory, setBusinessCategory] = useState(
+        team.businessCategory ?? '',
+    );
 
     return (
         <>
@@ -45,6 +57,17 @@ export default function BusinessGeneral({ team, permissions }: Props) {
                             >
                                 {({ errors, processing }) => (
                                     <>
+                                        <input
+                                            type="hidden"
+                                            name="timezone"
+                                            value={timezone}
+                                        />
+                                        <input
+                                            type="hidden"
+                                            name="business_category"
+                                            value={businessCategory}
+                                        />
+
                                         <div className="grid gap-2">
                                             <Label htmlFor="name">
                                                 Team name
@@ -57,6 +80,52 @@ export default function BusinessGeneral({ team, permissions }: Props) {
                                                 required
                                             />
                                             <InputError message={errors.name} />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="business_category">
+                                                Business category
+                                            </Label>
+                                            <SearchableSelect
+                                                id="business_category"
+                                                options={businessCategories}
+                                                value={businessCategory}
+                                                onChange={setBusinessCategory}
+                                                placeholder="Select a category"
+                                                searchPlaceholder="Search categories…"
+                                                emptyMessage="No categories found."
+                                                invalid={Boolean(
+                                                    errors.business_category,
+                                                )}
+                                                data-test="team-category-select"
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.business_category
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="timezone">
+                                                Timezone
+                                            </Label>
+                                            <SearchableSelect
+                                                id="timezone"
+                                                options={timezones}
+                                                value={timezone}
+                                                onChange={setTimezone}
+                                                placeholder="Select a timezone"
+                                                searchPlaceholder="Search timezones…"
+                                                emptyMessage="No timezones found."
+                                                invalid={Boolean(
+                                                    errors.timezone,
+                                                )}
+                                                data-test="team-timezone-select"
+                                            />
+                                            <InputError
+                                                message={errors.timezone}
+                                            />
                                         </div>
 
                                         <div className="flex items-center gap-4">

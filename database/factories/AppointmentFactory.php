@@ -41,4 +41,16 @@ class AppointmentFactory extends Factory
             'notes' => fake()->optional()->sentence(),
         ];
     }
+
+    /**
+     * Indicate that the appointment is delivered online without a location.
+     */
+    public function online(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'location_id' => null,
+            'delivery_type' => DeliveryType::Online,
+            'online_meeting_provider' => 'google_meet',
+        ]);
+    }
 }

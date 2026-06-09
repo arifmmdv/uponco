@@ -14,7 +14,6 @@ export type AppointmentServiceOption = {
 export type AppointmentLocationOption = {
     id: number;
     name: string;
-    timezone: string;
     service_ids: number[];
     specialist_ids: number[];
 };
@@ -31,7 +30,7 @@ export type AppointmentSlot = {
     start: string;
     /** ISO-8601 UTC instant of the slot end. */
     end: string;
-    /** Wall-clock start time (HH:MM) in the location timezone. */
+    /** Wall-clock start time (HH:MM) in the team timezone. */
     label: string;
     available: boolean;
 };
@@ -43,7 +42,7 @@ export type Appointment = {
     timezone: string;
     notes: string | null;
     service: { id: number; title: string };
-    location: { id: number; name: string };
+    location: { id: number; name: string } | null;
     specialist: { id: number; name: string };
     customer: {
         id: number;
@@ -52,6 +51,6 @@ export type Appointment = {
         phone: string | null;
     };
     service_id: number;
-    location_id: number;
+    location_id: number | null;
     specialist_id: number;
 };

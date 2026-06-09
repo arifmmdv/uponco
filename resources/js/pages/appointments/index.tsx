@@ -20,6 +20,7 @@ import type {
 
 type Props = {
     appointments: Appointment[];
+    timezone: string;
     services: AppointmentServiceOption[];
     locations: AppointmentLocationOption[];
     specialists: AppointmentSpecialistOption[];
@@ -28,6 +29,7 @@ type Props = {
 
 export default function AppointmentsIndex({
     appointments,
+    timezone,
     services,
     locations,
     specialists,
@@ -48,7 +50,6 @@ export default function AppointmentsIndex({
             only: ['availableSlots'],
             data: {
                 service_id: request.serviceId,
-                location_id: request.locationId,
                 specialist_id: request.specialistId,
                 date: request.date,
                 appointment_id: request.appointmentId ?? '',
@@ -67,19 +68,12 @@ export default function AppointmentsIndex({
         setEditing(appointment);
         setFormOpen(true);
 
-        const location = locations.find(
-            (item) => item.id === appointment.location_id,
-        );
-
-        if (location) {
-            requestSlots({
-                serviceId: appointment.service_id,
-                locationId: appointment.location_id,
-                specialistId: appointment.specialist_id,
-                date: toDateInputValue(appointment.start_at, location.timezone),
-                appointmentId: appointment.id,
-            });
-        }
+        requestSlots({
+            serviceId: appointment.service_id,
+            specialistId: appointment.specialist_id,
+            date: toDateInputValue(appointment.start_at, timezone),
+            appointmentId: appointment.id,
+        });
     };
 
     const confirmDelete = (appointment: Appointment) => {
@@ -88,7 +82,7 @@ export default function AppointmentsIndex({
     };
 
     const hasBookableResources =
-        services.length > 0 && locations.length > 0 && specialists.length > 0;
+        services.length > 0 && specialists.length > 0;
 
     return (
         <>
@@ -123,6 +117,7 @@ export default function AppointmentsIndex({
                 onOpenChange={setFormOpen}
                 appointment={editing}
                 teamSlug={teamSlug}
+                timezone={timezone}
                 services={services}
                 locations={locations}
                 specialists={specialists}
