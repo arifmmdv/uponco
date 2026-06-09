@@ -46,9 +46,11 @@ class BusinessController extends Controller
             $locked->update(['name' => $request->validated('name')]);
         });
 
+        $team->refresh();
+
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Team updated.')]);
 
-        return back();
+        return to_route('company.business.edit', ['current_team' => $team->slug]);
     }
 
     /**

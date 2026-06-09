@@ -40,9 +40,10 @@ Route::prefix('{current_team}')
         Route::get('company/work-hours', [WorkHoursController::class, 'edit'])->name('company.work-hours.edit');
         Route::put('company/work-hours', [WorkHoursController::class, 'update'])->name('company.work-hours.update');
 
-        Route::get('company/business', [BusinessController::class, 'edit'])->name('company.business.edit');
-        Route::patch('company/business', [BusinessController::class, 'update'])->name('company.business.update');
-        Route::delete('company/business', [BusinessController::class, 'destroy'])->name('company.business.destroy');
+        Route::redirect('company/business', 'company/business/general')->name('company.business');
+        Route::get('company/business/general', [BusinessController::class, 'edit'])->name('company.business.edit');
+        Route::patch('company/business/general', [BusinessController::class, 'update'])->name('company.business.update');
+        Route::delete('company/business/general', [BusinessController::class, 'destroy'])->name('company.business.destroy');
 
         Route::get('company/business/members', [BusinessController::class, 'members'])->name('company.business.members.index');
         Route::patch('company/business/members/{user}', [BusinessMemberController::class, 'update'])->name('company.business.members.update');
