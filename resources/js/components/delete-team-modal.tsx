@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { destroy } from '@/routes/teams';
+import { destroy } from '@/routes/company/business';
 import type { Team } from '@/types';
 
 type Props = {

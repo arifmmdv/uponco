@@ -1,12 +1,8 @@
 <?php
 
 use App\Http\Controllers\Settings\AccountController;
-use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
-use App\Http\Controllers\Settings\WorkHoursController;
 use App\Http\Controllers\Teams\TeamController;
-use App\Http\Controllers\Teams\TeamInvitationController;
-use App\Http\Controllers\Teams\TeamMemberController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
@@ -16,12 +12,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/account', [AccountController::class, 'edit'])->name('account.edit');
     Route::patch('settings/account', [AccountController::class, 'update'])->name('account.update');
-
-    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
-
-    Route::get('settings/work-hours', [WorkHoursController::class, 'edit'])->name('work-hours.edit');
-    Route::put('settings/work-hours', [WorkHoursController::class, 'update'])->name('work-hours.update');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -37,19 +27,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 
-    Route::get('settings/teams', [TeamController::class, 'index'])->name('teams.index');
-    Route::post('settings/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::post('teams', [TeamController::class, 'store'])->name('teams.store');
 
-    Route::middleware(EnsureTeamMembership::class)->group(function () {
-        Route::get('settings/teams/{team}', [TeamController::class, 'edit'])->name('teams.edit');
-        Route::patch('settings/teams/{team}', [TeamController::class, 'update'])->name('teams.update');
-        Route::delete('settings/teams/{team}', [TeamController::class, 'destroy'])->name('teams.destroy');
-        Route::post('settings/teams/{team}/switch', [TeamController::class, 'switch'])->name('teams.switch');
-
-        Route::patch('settings/teams/{team}/members/{user}', [TeamMemberController::class, 'update'])->name('teams.members.update');
-        Route::delete('settings/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
-
-        Route::post('settings/teams/{team}/invitations', [TeamInvitationController::class, 'store'])->name('teams.invitations.store');
-        Route::delete('settings/teams/{team}/invitations/{invitation}', [TeamInvitationController::class, 'destroy'])->name('teams.invitations.destroy');
-    });
+    Route::post('teams/{team}/switch', [TeamController::class, 'switch'])
+        ->middleware(EnsureTeamMembership::class)
+        ->name('teams.switch');
 });

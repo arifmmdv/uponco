@@ -1,9 +1,11 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import WeeklySchedule from '@/components/work-hours/weekly-schedule';
-import { edit, update } from '@/routes/work-hours';
+import { index as companyIndex } from '@/routes/company';
+import { edit as editWorkHours, update } from '@/routes/company/work-hours';
+import { edit as editWorkProfile } from '@/routes/company/work-profile';
 import type {
     DayKey,
     TimeSlot,
@@ -18,6 +20,9 @@ type WorkHoursPageProps = {
 };
 
 export default function WorkHours({ schedule }: WorkHoursPageProps) {
+    const { currentTeam } = usePage().props;
+    const teamSlug = currentTeam?.slug ?? '';
+
     const form = useForm<{ schedule: WeeklyScheduleType }>({ schedule });
 
     const setSchedule = (
@@ -102,7 +107,7 @@ export default function WorkHours({ schedule }: WorkHoursPageProps) {
     const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
         event.preventDefault();
 
-        form.put(update().url, {
+        form.put(update(teamSlug).url, {
             preserveScroll: true,
             onSuccess: () => toast.success('Work hours saved.'),
             onError: () => toast.error('Please fix the errors and try again.'),
@@ -111,9 +116,9 @@ export default function WorkHours({ schedule }: WorkHoursPageProps) {
 
     return (
         <>
-            <Head title="Work hours settings" />
+            <Head title="Work hours" />
 
-            <h1 className="sr-only">Work hours settings</h1>
+            <h1 className="sr-only">Work hours</h1>
 
             <div className="space-y-6">
                 <Heading
@@ -139,11 +144,25 @@ export default function WorkHours({ schedule }: WorkHoursPageProps) {
     );
 }
 
-WorkHours.layout = {
+WorkHours.layout = (props: { currentTeam?: { slug: string } | null }) => ({
     breadcrumbs: [
         {
-            title: 'Work hours settings',
-            href: edit(),
+            title: 'Company',
+            href: props.currentTeam
+                ? companyIndex(props.currentTeam.slug)
+                : '/',
+        },
+        {
+            title: 'Work Profile',
+            href: props.currentTeam
+                ? editWorkProfile(props.currentTeam.slug)
+                : '/',
+        },
+        {
+            title: 'Work hours',
+            href: props.currentTeam
+                ? editWorkHours(props.currentTeam.slug)
+                : '/',
         },
     ],
-};
+});

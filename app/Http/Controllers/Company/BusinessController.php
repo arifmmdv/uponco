@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Http\Controllers\Company;
+
+use App\Enums\TeamRole;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Company\DeleteBusinessRequest;
+use App\Http\Requests\Teams\SaveTeamRequest;
+use App\Models\Team;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class BusinessController extends Controller
+{
+    /**
+     * Show the current team's general business settings.
+     */
+    public function edit(Request $request): Response
+    {
+        $user = $request->user();
+        $team = $user->currentTeam;
+
+        return Inertia::render('company/business/general', [
+            'team' => $this->toTeamArray($team),
+            'permissions' => $user->toTeamPermissions($team),
+        ]);
+    }
+
+    /**
+     * Update the current team's name.
+     */
+    public function update(SaveTeamRequest $request): RedirectResponse
+    {
+        $team = $request->user()->currentTeam;
+
+        Gate::authorize('update', $team);
+
+        DB::transaction(function () use ($request, $team): void {
+            $locked = Team::whereKey($team->id)->lockForUpdate()->firstOrFail();
+
+            $locked->update(['name' => $request->validated('name')]);
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Team updated.')]);
+
+        return back();
+    }
+
+    /**
+     * Delete the current team.
+     */
+    public function destroy(DeleteBusinessRequest $request): RedirectResponse
+    {
+        $user = $request->user();
+        $team = $user->currentTeam;
+
+        $fallbackTeam = $user->fallbackTeam($team);
+
+        DB::transaction(function () use ($user, $team): void {
+            User::where('current_team_id', $team->id)
+                ->where('id', '!=', $user->id)
+                ->each(fn (User $affectedUser) => $affectedUser->switchTeam($affectedUser->personalTeam()));
+
+            $team->invitations()->delete();
+            $team->memberships()->delete();
+            $team->delete();
+        });
+
+        $user->switchTeam($fallbackTeam);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Team deleted.')]);
+
+        return to_route('dashboard', ['current_team' => $fallbackTeam->slug]);
+    }
+
+    /**
+     * Show the current team's members and invitations.
+     */
+    public function members(Request $request): Response
+    {
+        $user = $request->user();
+        $team = $user->currentTeam;
+
+        return Inertia::render('company/business/members', [
+            'team' => $this->toTeamArray($team),
+            'members' => $team->members()->get()->map(fn (User $member): array => [
+                'id' => $member->id,
+                'name' => $member->name,
+                'email' => $member->email,
+                'avatar' => $member->avatar ?? null,
+                'role' => $member->pivot->role->value,
+                'role_label' => $member->pivot->role->label(),
+            ]),
+            'invitations' => $team->invitations()
+                ->whereNull('accepted_at')
+                ->get()
+                ->map(fn ($invitation): array => [
+                    'code' => $invitation->code,
+                    'email' => $invitation->email,
+                    'role' => $invitation->role->value,
+                    'role_label' => $invitation->role->label(),
+                    'created_at' => $invitation->created_at->toISOString(),
+                ]),
+            'permissions' => $user->toTeamPermissions($team),
+            'availableRoles' => TeamRole::assignable(),
+        ]);
+    }
+
+    /**
+     * Transform a team into its array representation for the frontend.
+     *
+     * @return array{id: int, name: string, slug: string, isPersonal: bool}
+     */
+    protected function toTeamArray(Team $team): array
+    {
+        return [
+            'id' => $team->id,
+            'name' => $team->name,
+            'slug' => $team->slug,
+            'isPersonal' => $team->is_personal,
+        ];
+    }
+}

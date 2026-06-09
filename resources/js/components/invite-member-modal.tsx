@@ -20,7 +20,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { store as storeInvitation } from '@/routes/teams/invitations';
+import { store as storeInvitation } from '@/routes/company/business/invitations';
 import type { RoleOption, Team } from '@/types';
 
 type Props = {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Settings;
+namespace App\Http\Requests\Company;
 
 use App\Models\WorkHour;
 use Illuminate\Contracts\Validation\ValidationRule;

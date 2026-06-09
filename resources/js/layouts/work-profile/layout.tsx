@@ -1,42 +1,44 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
-import { edit as editAccount } from '@/routes/account';
-import { edit as editSecurity } from '@/routes/security';
+import { edit as editWorkHours } from '@/routes/company/work-hours';
+import { edit as editWorkProfile } from '@/routes/company/work-profile';
 import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Account',
-        href: editAccount(),
-        icon: null,
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-        icon: null,
-    },
-];
-
-export default function SettingsLayout({ children }: PropsWithChildren) {
+export default function WorkProfileLayout({ children }: PropsWithChildren) {
+    const { currentTeam } = usePage().props;
+    const teamSlug = currentTeam?.slug ?? '';
     const { isCurrentOrParentUrl } = useCurrentUrl();
+
+    const sidebarNavItems: NavItem[] = [
+        {
+            title: 'Profile',
+            href: editWorkProfile(teamSlug),
+            icon: null,
+        },
+        {
+            title: 'Work hours',
+            href: editWorkHours(teamSlug),
+            icon: null,
+        },
+    ];
 
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title="Work Profile"
+                description="Manage your public profile and availability"
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav
                         className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
+                        aria-label="Work Profile"
                     >
                         {sidebarNavItems.map((item, index) => (
                             <Button

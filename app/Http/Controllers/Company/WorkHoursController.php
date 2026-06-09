@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\Settings;
+namespace App\Http\Controllers\Company;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Settings\UpdateWorkHoursRequest;
+use App\Http\Requests\Company\UpdateWorkHoursRequest;
 use App\Models\WorkHour;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,13 +15,13 @@ use Inertia\Response;
 class WorkHoursController extends Controller
 {
     /**
-     * Show the user's work hours settings page.
+     * Show the user's work hours page.
      */
     public function edit(Request $request): Response
     {
         $workHours = $request->user()->workHours()->orderBy('start_time')->get();
 
-        return Inertia::render('settings/work-hours', [
+        return Inertia::render('company/work-profile/work-hours', [
             'schedule' => $this->toWeeklySchedule($workHours),
         ]);
     }

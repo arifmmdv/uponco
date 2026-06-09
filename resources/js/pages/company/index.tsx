@@ -1,11 +1,13 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ChevronRight, MapPin, Wrench } from 'lucide-react';
+import { Building2, ChevronRight, MapPin, UserCog, Wrench } from 'lucide-react';
 
 import Heading from '@/components/heading';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as companyIndex } from '@/routes/company';
+import { edit as editBusiness } from '@/routes/company/business';
 import { index as locationsIndex } from '@/routes/company/locations';
 import { index as servicesIndex } from '@/routes/company/services';
+import { edit as editWorkProfile } from '@/routes/company/work-profile';
 
 type Props = {
     stats: {
@@ -19,6 +21,21 @@ export default function CompanyIndex({ stats }: Props) {
     const teamSlug = currentTeam?.slug ?? '';
 
     const cards = [
+        {
+            title: 'Business',
+            description: 'Manage your team details and team members.',
+            icon: Building2,
+            count: undefined,
+            href: editBusiness(teamSlug),
+        },
+        {
+            title: 'Work Profile',
+            description:
+                'Manage your public profile and weekly availability.',
+            icon: UserCog,
+            count: undefined,
+            href: editWorkProfile(teamSlug),
+        },
         {
             title: 'Locations',
             description: 'Manage the physical locations for your company.',
@@ -70,9 +87,11 @@ export default function CompanyIndex({ stats }: Props) {
                                         <p className="text-sm text-muted-foreground">
                                             {card.description}
                                         </p>
-                                        <p className="pt-1 text-2xl font-semibold">
-                                            {card.count}
-                                        </p>
+                                        {card.count !== undefined && (
+                                            <p className="pt-1 text-2xl font-semibold">
+                                                {card.count}
+                                            </p>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>

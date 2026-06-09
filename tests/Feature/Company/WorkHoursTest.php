@@ -5,6 +5,7 @@ use App\Models\WorkHour;
 
 test('work hours page is displayed with the full weekly schedule', function () {
     $user = User::factory()->create();
+    $team = $user->currentTeam;
 
     WorkHour::factory()->for($user)->create([
         'day_of_week' => 0,
@@ -13,10 +14,10 @@ test('work hours page is displayed with the full weekly schedule', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('work-hours.edit'))
+        ->get(route('company.work-hours.edit', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('settings/work-hours')
+            ->component('company/work-profile/work-hours')
             ->where('schedule.monday.enabled', true)
             ->where('schedule.monday.slots.0.start', '09:00')
             ->where('schedule.monday.slots.0.end', '17:00')
@@ -27,9 +28,10 @@ test('work hours page is displayed with the full weekly schedule', function () {
 
 test('enabled days are persisted and disabled days are ignored', function () {
     $user = User::factory()->create();
+    $team = $user->currentTeam;
 
     $this->actingAs($user)
-        ->put(route('work-hours.update'), [
+        ->put(route('company.work-hours.update', ['current_team' => $team->slug]), [
             'schedule' => array_merge(
                 emptySchedule(),
                 [
@@ -57,11 +59,12 @@ test('enabled days are persisted and disabled days are ignored', function () {
 
 test('updating replaces the existing work hours', function () {
     $user = User::factory()->create();
+    $team = $user->currentTeam;
 
     WorkHour::factory()->for($user)->create(['day_of_week' => 5]);
 
     $this->actingAs($user)
-        ->put(route('work-hours.update'), [
+        ->put(route('company.work-hours.update', ['current_team' => $team->slug]), [
             'schedule' => array_merge(emptySchedule(), [
                 'tuesday' => [
                     'enabled' => true,
@@ -77,9 +80,10 @@ test('updating replaces the existing work hours', function () {
 
 test('an enabled day must have at least one slot', function () {
     $user = User::factory()->create();
+    $team = $user->currentTeam;
 
     $this->actingAs($user)
-        ->put(route('work-hours.update'), [
+        ->put(route('company.work-hours.update', ['current_team' => $team->slug]), [
             'schedule' => array_merge(emptySchedule(), [
                 'monday' => ['enabled' => true, 'slots' => []],
             ]),
@@ -89,9 +93,10 @@ test('an enabled day must have at least one slot', function () {
 
 test('a slot end time must be after its start time', function () {
     $user = User::factory()->create();
+    $team = $user->currentTeam;
 
     $this->actingAs($user)
-        ->put(route('work-hours.update'), [
+        ->put(route('company.work-hours.update', ['current_team' => $team->slug]), [
             'schedule' => array_merge(emptySchedule(), [
                 'monday' => [
                     'enabled' => true,

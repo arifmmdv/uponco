@@ -12,13 +12,13 @@ test('team member roles can be updated by owners', function () {
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
     $team->members()->attach($member, ['role' => TeamRole::Member->value]);
 
-    $response = $this
+    $this
         ->actingAs($owner)
-        ->patch(route('teams.members.update', [$team, $member]), [
+        ->patch(route('company.business.members.update', ['current_team' => $team->slug, 'user' => $member]), [
             'role' => TeamRole::Admin->value,
-        ]);
-
-    $response->assertRedirect(route('teams.edit', $team));
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
 
     expect($team->members()->where('user_id', $member->id)->first()->pivot->role->value)->toEqual(TeamRole::Admin->value);
 });
@@ -33,13 +33,12 @@ test('team member roles cannot be updated by non owners', function () {
     $team->members()->attach($admin, ['role' => TeamRole::Admin->value]);
     $team->members()->attach($member, ['role' => TeamRole::Member->value]);
 
-    $response = $this
+    $this
         ->actingAs($admin)
-        ->patch(route('teams.members.update', [$team, $member]), [
+        ->patch(route('company.business.members.update', ['current_team' => $team->slug, 'user' => $member]), [
             'role' => TeamRole::Admin->value,
-        ]);
-
-    $response->assertForbidden();
+        ])
+        ->assertForbidden();
 });
 
 test('team members can be removed by owners', function () {
@@ -50,11 +49,10 @@ test('team members can be removed by owners', function () {
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
     $team->members()->attach($member, ['role' => TeamRole::Member->value]);
 
-    $response = $this
+    $this
         ->actingAs($owner)
-        ->delete(route('teams.members.destroy', [$team, $member]));
-
-    $response->assertRedirect(route('teams.edit', $team));
+        ->delete(route('company.business.members.destroy', ['current_team' => $team->slug, 'user' => $member]))
+        ->assertRedirect();
 
     expect($member->fresh()->belongsToTeam($team))->toBeFalse();
 });
@@ -69,11 +67,10 @@ test('team members cannot be removed by non owners', function () {
     $team->members()->attach($admin, ['role' => TeamRole::Admin->value]);
     $team->members()->attach($member, ['role' => TeamRole::Member->value]);
 
-    $response = $this
+    $this
         ->actingAs($admin)
-        ->delete(route('teams.members.destroy', [$team, $member]));
-
-    $response->assertForbidden();
+        ->delete(route('company.business.members.destroy', ['current_team' => $team->slug, 'user' => $member]))
+        ->assertForbidden();
 });
 
 test('team owner cannot be removed', function () {
@@ -82,11 +79,10 @@ test('team owner cannot be removed', function () {
 
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
 
-    $response = $this
+    $this
         ->actingAs($owner)
-        ->delete(route('teams.members.destroy', [$team, $owner]));
-
-    $response->assertForbidden();
+        ->delete(route('company.business.members.destroy', ['current_team' => $team->slug, 'user' => $owner]))
+        ->assertForbidden();
 
     expect($owner->fresh()->belongsToTeam($team))->toBeTrue();
 });
@@ -99,13 +95,12 @@ test('team member role cannot be set to owner', function () {
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
     $team->members()->attach($member, ['role' => TeamRole::Member->value]);
 
-    $response = $this
+    $this
         ->actingAs($owner)
-        ->patch(route('teams.members.update', [$team, $member]), [
+        ->patch(route('company.business.members.update', ['current_team' => $team->slug, 'user' => $member]), [
             'role' => TeamRole::Owner->value,
-        ]);
-
-    $response->assertSessionHasErrors('role');
+        ])
+        ->assertSessionHasErrors('role');
 
     expect($team->members()->where('user_id', $member->id)->first()->pivot->role->value)->toEqual(TeamRole::Member->value);
 });
@@ -123,7 +118,7 @@ test('removed member current team is set to personal team', function () {
 
     $this
         ->actingAs($owner)
-        ->delete(route('teams.members.destroy', [$team, $member]));
+        ->delete(route('company.business.members.destroy', ['current_team' => $team->slug, 'user' => $member]));
 
     expect($member->fresh()->current_team_id)->toEqual($personalTeam->id);
 });

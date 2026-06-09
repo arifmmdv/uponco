@@ -1,10 +1,15 @@
 <?php
 
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\Company\BusinessController;
+use App\Http\Controllers\Company\BusinessInvitationController;
+use App\Http\Controllers\Company\BusinessMemberController;
 use App\Http\Controllers\Company\CompanyController;
 use App\Http\Controllers\Company\LocationController;
 use App\Http\Controllers\Company\ServiceCategoryController;
 use App\Http\Controllers\Company\ServiceController;
+use App\Http\Controllers\Company\WorkHoursController;
+use App\Http\Controllers\Company\WorkProfileController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -28,6 +33,23 @@ Route::prefix('{current_team}')
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
         Route::get('company', [CompanyController::class, 'index'])->name('company.index');
+
+        Route::get('company/work-profile', [WorkProfileController::class, 'edit'])->name('company.work-profile.edit');
+        Route::patch('company/work-profile', [WorkProfileController::class, 'update'])->name('company.work-profile.update');
+
+        Route::get('company/work-hours', [WorkHoursController::class, 'edit'])->name('company.work-hours.edit');
+        Route::put('company/work-hours', [WorkHoursController::class, 'update'])->name('company.work-hours.update');
+
+        Route::get('company/business', [BusinessController::class, 'edit'])->name('company.business.edit');
+        Route::patch('company/business', [BusinessController::class, 'update'])->name('company.business.update');
+        Route::delete('company/business', [BusinessController::class, 'destroy'])->name('company.business.destroy');
+
+        Route::get('company/business/members', [BusinessController::class, 'members'])->name('company.business.members.index');
+        Route::patch('company/business/members/{user}', [BusinessMemberController::class, 'update'])->name('company.business.members.update');
+        Route::delete('company/business/members/{user}', [BusinessMemberController::class, 'destroy'])->name('company.business.members.destroy');
+
+        Route::post('company/business/invitations', [BusinessInvitationController::class, 'store'])->name('company.business.invitations.store');
+        Route::delete('company/business/invitations/{invitation}', [BusinessInvitationController::class, 'destroy'])->name('company.business.invitations.destroy');
 
         Route::get('company/locations', [LocationController::class, 'index'])->name('company.locations.index');
         Route::post('company/locations', [LocationController::class, 'store'])->name('company.locations.store');

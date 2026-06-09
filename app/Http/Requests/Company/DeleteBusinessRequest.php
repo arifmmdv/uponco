@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Requests\Teams;
+namespace App\Http\Requests\Company;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Validator;
 
-class DeleteTeamRequest extends FormRequest
+class DeleteBusinessRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return Gate::allows('delete', $this->route('team'));
+        return Gate::allows('delete', $this->user()->currentTeam);
     }
 
     /**
@@ -31,12 +31,14 @@ class DeleteTeamRequest extends FormRequest
 
     /**
      * Configure the validator instance.
+     *
+     * @return array<int, callable>
      */
     public function after(): array
     {
         return [
-            function (Validator $validator) {
-                $team = $this->route('team');
+            function (Validator $validator): void {
+                $team = $this->user()->currentTeam;
 
                 if ($this->input('name') !== $team->name) {
                     $validator->errors()->add('name', __('The team name does not match.'));
