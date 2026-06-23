@@ -6,6 +6,7 @@ use App\Enums\DeliveryType;
 use App\Models\Appointment;
 use App\Models\Location;
 use App\Models\Service;
+use App\Models\Team;
 use App\Models\User;
 use App\Support\Appointments\SlotGenerator;
 use Carbon\CarbonImmutable;
@@ -27,7 +28,15 @@ class SaveAppointmentRequest extends FormRequest
             return true;
         }
 
-        return $appointment->team_id === $this->user()->currentTeam->id;
+        return $appointment->team_id === $this->team()->id;
+    }
+
+    /**
+     * Get the team the appointment belongs to.
+     */
+    protected function team(): Team
+    {
+        return $this->user()->currentTeam;
     }
 
     /**
@@ -37,7 +46,7 @@ class SaveAppointmentRequest extends FormRequest
      */
     public function rules(): array
     {
-        $teamId = $this->user()->currentTeam->id;
+        $teamId = $this->team()->id;
 
         return [
             'service_id' => [
@@ -158,7 +167,7 @@ class SaveAppointmentRequest extends FormRequest
      */
     public function teamTimezone(): string
     {
-        return $this->user()->currentTeam->timezone ?: config('app.timezone');
+        return $this->team()->timezone ?: config('app.timezone');
     }
 
     /**

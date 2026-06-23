@@ -1,0 +1,411 @@
+import { Form, Head, router } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
+
+import AppointmentCustomerFields from '@/components/appointments/appointment-customer-fields';
+import AppointmentServiceSelect from '@/components/appointments/appointment-service-select';
+import AppointmentSlotPicker from '@/components/appointments/appointment-slot-picker';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { useFlashToast } from '@/hooks/use-flash-toast';
+import {
+    getAvailableOptions,
+    groupServicesByCategory,
+} from '@/lib/appointments';
+import { store } from '@/routes/public/appointments';
+import type {
+    AppointmentLocationOption,
+    AppointmentServiceOption,
+    AppointmentSlot,
+    AppointmentSpecialistOption,
+} from '@/types';
+
+type Props = {
+    company: {
+        name: string;
+        slug: string;
+    };
+    timezone: string;
+    services: AppointmentServiceOption[];
+    locations: AppointmentLocationOption[];
+    specialists: AppointmentSpecialistOption[];
+    availableSlots?: AppointmentSlot[];
+};
+
+export default function PublicAppointmentBooking({
+    company,
+    services,
+    locations,
+    specialists,
+    availableSlots = [],
+}: Props) {
+    useFlashToast();
+
+    const [slotsLoading, setSlotsLoading] = useState(false);
+    // Remount the form after a successful booking to clear every field.
+    const [formKey, setFormKey] = useState(0);
+
+    const requestSlots = (request: {
+        serviceId: number;
+        specialistId: number;
+        date: string;
+    }) => {
+        router.reload({
+            only: ['availableSlots'],
+            data: {
+                service_id: request.serviceId,
+                specialist_id: request.specialistId,
+                date: request.date,
+                appointment_id: '',
+            },
+            onStart: () => setSlotsLoading(true),
+            onFinish: () => setSlotsLoading(false),
+        });
+    };
+
+    return (
+        <div className="flex min-h-svh w-full justify-center bg-muted/30 px-4 py-8">
+            <Head title={`Book an appointment · ${company.name}`} />
+
+            <div className="w-full max-w-[460px]">
+                <header className="mb-6 text-center">
+                    <h1 className="text-xl font-semibold">{company.name}</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Book an appointment
+                    </p>
+                </header>
+
+                <div className="rounded-xl border bg-background p-4 shadow-sm sm:p-6">
+                    <BookingFormFields
+                        key={formKey}
+                        companySlug={company.slug}
+                        services={services}
+                        locations={locations}
+                        specialists={specialists}
+                        availableSlots={availableSlots}
+                        slotsLoading={slotsLoading}
+                        onRequestSlots={requestSlots}
+                        onSuccess={() => setFormKey((key) => key + 1)}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+type FieldsProps = {
+    companySlug: string;
+    services: AppointmentServiceOption[];
+    locations: AppointmentLocationOption[];
+    specialists: AppointmentSpecialistOption[];
+    availableSlots: AppointmentSlot[];
+    slotsLoading: boolean;
+    onRequestSlots: (request: {
+        serviceId: number;
+        specialistId: number;
+        date: string;
+    }) => void;
+    onSuccess: () => void;
+};
+
+function BookingFormFields({
+    companySlug,
+    services,
+    locations,
+    specialists,
+    availableSlots,
+    slotsLoading,
+    onRequestSlots,
+    onSuccess,
+}: FieldsProps) {
+    const [serviceId, setServiceId] = useState<number | null>(null);
+    const [locationId, setLocationId] = useState<number | null>(null);
+    const [specialistId, setSpecialistId] = useState<number | null>(null);
+    const [date, setDate] = useState('');
+    const [selectedStart, setSelectedStart] = useState('');
+
+    const { availableServices, availableLocations, availableSpecialists } =
+        useMemo(
+            () =>
+                getAvailableOptions(services, locations, specialists, {
+                    serviceId,
+                    locationId,
+                    specialistId,
+                }),
+            [
+                services,
+                locations,
+                specialists,
+                serviceId,
+                locationId,
+                specialistId,
+            ],
+        );
+
+    const serviceGroups = useMemo(
+        () => groupServicesByCategory(availableServices),
+        [availableServices],
+    );
+
+    const selectedService = useMemo(
+        () => services.find((item) => item.id === serviceId) ?? null,
+        [services, serviceId],
+    );
+
+    // Online services are not tied to a branch, so the location step is hidden.
+    const showLocation = selectedService?.delivery_type !== 'online';
+
+    const locationOptions = useMemo(
+        () =>
+            availableLocations.map((location) => ({
+                value: location.id.toString(),
+                label: location.name,
+            })),
+        [availableLocations],
+    );
+
+    const specialistOptions = useMemo(
+        () =>
+            availableSpecialists.map((specialist) => ({
+                value: specialist.id.toString(),
+                label: specialist.name,
+            })),
+        [availableSpecialists],
+    );
+
+    const selectionIncomplete = serviceId === null || specialistId === null;
+
+    const requestSlots = (next: {
+        serviceId: number | null;
+        specialistId: number | null;
+        date: string;
+    }) => {
+        setSelectedStart('');
+
+        if (
+            next.serviceId !== null &&
+            next.specialistId !== null &&
+            next.date !== ''
+        ) {
+            onRequestSlots({
+                serviceId: next.serviceId,
+                specialistId: next.specialistId,
+                date: next.date,
+            });
+        }
+    };
+
+    const handleServiceChange = (value: string) => {
+        const nextServiceId = Number(value);
+        const service = services.find((item) => item.id === nextServiceId);
+
+        let nextLocationId = locationId;
+        let nextSpecialistId = specialistId;
+
+        if (service) {
+            if (
+                nextLocationId !== null &&
+                !service.location_ids.includes(nextLocationId)
+            ) {
+                nextLocationId = null;
+            }
+
+            if (
+                nextSpecialistId !== null &&
+                !service.specialist_ids.includes(nextSpecialistId)
+            ) {
+                nextSpecialistId = null;
+            }
+        }
+
+        setServiceId(nextServiceId);
+        setLocationId(nextLocationId);
+        setSpecialistId(nextSpecialistId);
+        requestSlots({
+            serviceId: nextServiceId,
+            specialistId: nextSpecialistId,
+            date,
+        });
+    };
+
+    const handleLocationChange = (value: string) => {
+        const nextLocationId = Number(value);
+        const location = locations.find((item) => item.id === nextLocationId);
+
+        let nextServiceId = serviceId;
+        let nextSpecialistId = specialistId;
+
+        if (location) {
+            if (
+                nextServiceId !== null &&
+                !location.service_ids.includes(nextServiceId)
+            ) {
+                nextServiceId = null;
+            }
+
+            if (
+                nextSpecialistId !== null &&
+                !location.specialist_ids.includes(nextSpecialistId)
+            ) {
+                nextSpecialistId = null;
+            }
+        }
+
+        setLocationId(nextLocationId);
+        setServiceId(nextServiceId);
+        setSpecialistId(nextSpecialistId);
+        requestSlots({
+            serviceId: nextServiceId,
+            specialistId: nextSpecialistId,
+            date,
+        });
+    };
+
+    const handleSpecialistChange = (value: string) => {
+        const nextSpecialistId = Number(value);
+        const specialist = specialists.find(
+            (item) => item.id === nextSpecialistId,
+        );
+
+        let nextServiceId = serviceId;
+        let nextLocationId = locationId;
+
+        if (specialist) {
+            if (
+                nextServiceId !== null &&
+                !specialist.service_ids.includes(nextServiceId)
+            ) {
+                nextServiceId = null;
+            }
+
+            if (
+                nextLocationId !== null &&
+                !specialist.location_ids.includes(nextLocationId)
+            ) {
+                nextLocationId = null;
+            }
+        }
+
+        setSpecialistId(nextSpecialistId);
+        setServiceId(nextServiceId);
+        setLocationId(nextLocationId);
+        requestSlots({
+            serviceId: nextServiceId,
+            specialistId: nextSpecialistId,
+            date,
+        });
+    };
+
+    const handleDateChange = (value: string) => {
+        setDate(value);
+        requestSlots({ serviceId, specialistId, date: value });
+    };
+
+    return (
+        <Form
+            {...store.form(companySlug)}
+            options={{ preserveScroll: true }}
+            onSuccess={onSuccess}
+            className="space-y-5"
+            disableWhileProcessing
+        >
+            {({ errors, processing }) => (
+                <>
+                    <input
+                        type="hidden"
+                        name="service_id"
+                        value={serviceId ?? ''}
+                    />
+                    <input
+                        type="hidden"
+                        name="location_id"
+                        value={locationId ?? ''}
+                    />
+                    <input
+                        type="hidden"
+                        name="specialist_id"
+                        value={specialistId ?? ''}
+                    />
+                    <input
+                        type="hidden"
+                        name="start_at"
+                        value={selectedStart}
+                    />
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="service_id">Service</Label>
+                        <AppointmentServiceSelect
+                            id="service_id"
+                            groups={serviceGroups}
+                            value={serviceId?.toString() ?? ''}
+                            onChange={handleServiceChange}
+                            invalid={Boolean(errors.service_id)}
+                            data-test="appointment-service-select"
+                        />
+                        <InputError message={errors.service_id} />
+                    </div>
+
+                    {showLocation && (
+                        <div className="grid gap-2">
+                            <Label htmlFor="location_id">Location</Label>
+                            <SearchableSelect
+                                id="location_id"
+                                options={locationOptions}
+                                value={locationId?.toString() ?? ''}
+                                onChange={handleLocationChange}
+                                placeholder="Select a location"
+                                searchPlaceholder="Search locations…"
+                                emptyMessage="No locations available."
+                                invalid={Boolean(errors.location_id)}
+                                data-test="appointment-location-select"
+                            />
+                            <InputError message={errors.location_id} />
+                        </div>
+                    )}
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="specialist_id">Specialist</Label>
+                        <SearchableSelect
+                            id="specialist_id"
+                            options={specialistOptions}
+                            value={specialistId?.toString() ?? ''}
+                            onChange={handleSpecialistChange}
+                            placeholder="Select a specialist"
+                            searchPlaceholder="Search specialists…"
+                            emptyMessage="No specialists available."
+                            invalid={Boolean(errors.specialist_id)}
+                            data-test="appointment-specialist-select"
+                        />
+                        <InputError message={errors.specialist_id} />
+                    </div>
+
+                    <AppointmentSlotPicker
+                        date={date}
+                        onDateChange={handleDateChange}
+                        slots={availableSlots}
+                        loading={slotsLoading}
+                        selectedStart={selectedStart}
+                        onSelectSlot={setSelectedStart}
+                        selectionIncomplete={selectionIncomplete}
+                        error={errors.start_at}
+                    />
+
+                    <AppointmentCustomerFields
+                        appointment={null}
+                        errors={errors}
+                    />
+
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        data-test="appointment-save-button"
+                        disabled={processing || selectedStart === ''}
+                    >
+                        Book appointment
+                    </Button>
+                </>
+            )}
+        </Form>
+    );
+}

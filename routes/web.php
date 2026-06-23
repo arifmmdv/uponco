@@ -12,11 +12,15 @@ use App\Http\Controllers\Company\ServiceController;
 use App\Http\Controllers\Company\WorkHoursController;
 use App\Http\Controllers\Company\WorkProfileController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PublicAppointmentController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::get('appointments/{company}', [PublicAppointmentController::class, 'show'])->name('public.appointments.show');
+Route::post('appointments/{company}', [PublicAppointmentController::class, 'store'])->name('public.appointments.store');
 
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])

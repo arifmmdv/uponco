@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\InteractsWithAppointmentBooking;
 use App\Http\Requests\Appointments\SaveAppointmentRequest;
 use App\Models\Appointment;
-use App\Models\Customer;
-use App\Models\Service;
-use App\Models\Team;
-use App\Models\User;
 use App\Support\Appointments\AppointmentOptions;
-use App\Support\Appointments\SlotGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,6 +13,8 @@ use Inertia\Response;
 
 class AppointmentController extends Controller
 {
+    use InteractsWithAppointmentBooking;
+
     /**
      * Display a listing of the team's appointments.
      */
@@ -91,57 +89,6 @@ class AppointmentController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Appointment deleted.')]);
 
         return back();
-    }
-
-    /**
-     * Find or create the customer for the appointment within the team.
-     *
-     * @param  array{name: string, email: ?string, phone: ?string}  $data
-     */
-    protected function resolveCustomer(Team $team, array $data): Customer
-    {
-        $existing = $team->customers()
-            ->where(function ($query) use ($data): void {
-                $query->when($data['email'], fn ($q) => $q->orWhere('email', $data['email']));
-                $query->when($data['phone'], fn ($q) => $q->orWhere('phone', $data['phone']));
-            })
-            ->first();
-
-        if ($existing) {
-            return $existing;
-        }
-
-        return $team->customers()->create($data);
-    }
-
-    /**
-     * Resolve the available slots for the current picker selection.
-     *
-     * @return array<int, array{start: string, end: string, label: string, available: bool}>
-     */
-    protected function availableSlots(Request $request, Team $team): array
-    {
-        $data = $request->validate([
-            'service_id' => ['required', 'integer'],
-            'specialist_id' => ['required', 'integer'],
-            'date' => ['required', 'date_format:Y-m-d'],
-            'appointment_id' => ['nullable', 'integer'],
-        ]);
-
-        $service = $team->services()->whereKey($data['service_id'])->first();
-        $specialist = $team->members()->whereKey($data['specialist_id'])->first();
-
-        if (! $service instanceof Service || ! $specialist instanceof User) {
-            return [];
-        }
-
-        return SlotGenerator::generate(
-            $service,
-            $specialist,
-            $team->timezone ?: config('app.timezone'),
-            $data['date'],
-            $data['appointment_id'] ?? null,
-        );
     }
 
     /**
