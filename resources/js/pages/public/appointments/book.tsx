@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react';
 
 import ExpandableCard from '@/components/public-booking/expandable-card';
 import LocationPicker from '@/components/public-booking/location-picker';
-import ProgressSteps from '@/components/public-booking/progress-steps';
 import ServicePicker from '@/components/public-booking/service-picker';
 import SpecialistPicker from '@/components/public-booking/specialist-picker';
 import StepDateTime from '@/components/public-booking/step-datetime';
 import StepDetails from '@/components/public-booking/step-details';
 import type { CustomerDetails } from '@/components/public-booking/step-details';
 import SuccessScreen from '@/components/public-booking/success-screen';
+import SummaryBar from '@/components/public-booking/summary-bar';
 import { Button } from '@/components/ui/button';
 import {
     buildUpcomingDays,
@@ -49,7 +49,6 @@ type ConfirmedSummary = {
     customerName: string;
 };
 
-const STEP_LABELS = ['Choose', 'Date & time', 'Your details'];
 const STEP_TITLES = [
     'What would you like to book?',
     'Pick a date & time',
@@ -68,7 +67,7 @@ export default function PublicAppointmentBooking({
 
     const [step, setStep] = useState(0);
     const [direction, setDirection] = useState<'forward' | 'back'>('forward');
-    const [openCard, setOpenCard] = useState<EntryCard>('service');
+    const [openCard, setOpenCard] = useState<EntryCard>(null);
 
     const [serviceId, setServiceId] = useState<number | null>(null);
     const [locationId, setLocationId] = useState<number | null>(null);
@@ -408,7 +407,7 @@ export default function PublicAppointmentBooking({
             notes: '',
         });
         setErrors({});
-        setOpenCard('service');
+        setOpenCard(null);
         setDirection('back');
         setStep(0);
     };
@@ -433,9 +432,7 @@ export default function PublicAppointmentBooking({
                         </p>
                     </div>
 
-                    {confirmed === null && (
-                        <ProgressSteps steps={STEP_LABELS} current={step} />
-                    )}
+                    {confirmed === null && <SummaryBar {...summary} />}
                 </header>
 
                 <main className="flex-1 px-5 pb-28">
@@ -470,21 +467,6 @@ export default function PublicAppointmentBooking({
                                     </ExpandableCard>
 
                                     <ExpandableCard
-                                        icon={MapPin}
-                                        title="Location"
-                                        hint="Pick where to visit"
-                                        selectedLabel={selectedLocation?.name}
-                                        open={openCard === 'location'}
-                                        onToggle={() => toggleCard('location')}
-                                    >
-                                        <LocationPicker
-                                            locations={availableLocations}
-                                            selectedId={locationId}
-                                            onSelect={handleLocationChange}
-                                        />
-                                    </ExpandableCard>
-
-                                    <ExpandableCard
                                         icon={User}
                                         title="Specialist"
                                         hint="Choose who you'll see"
@@ -498,6 +480,21 @@ export default function PublicAppointmentBooking({
                                             specialists={availableSpecialists}
                                             selectedId={specialistId}
                                             onSelect={handleSpecialistChange}
+                                        />
+                                    </ExpandableCard>
+
+                                    <ExpandableCard
+                                        icon={MapPin}
+                                        title="Location"
+                                        hint="Pick where to visit"
+                                        selectedLabel={selectedLocation?.name}
+                                        open={openCard === 'location'}
+                                        onToggle={() => toggleCard('location')}
+                                    >
+                                        <LocationPicker
+                                            locations={availableLocations}
+                                            selectedId={locationId}
+                                            onSelect={handleLocationChange}
                                         />
                                     </ExpandableCard>
                                 </div>
@@ -522,7 +519,6 @@ export default function PublicAppointmentBooking({
                                     values={details}
                                     onChange={handleDetailChange}
                                     errors={errors}
-                                    summary={summary}
                                 />
                             )}
                         </div>
@@ -536,17 +532,18 @@ export default function PublicAppointmentBooking({
                                 type="button"
                                 variant="outline"
                                 size="icon"
+                                className="size-[50px] shrink-0"
                                 onClick={() => goToStep(step - 1)}
                                 aria-label="Back"
                             >
-                                <ArrowLeft className="size-4" />
+                                <ArrowLeft className="size-5" />
                             </Button>
                         )}
 
                         {step < 2 ? (
                             <Button
                                 type="button"
-                                className="flex-1"
+                                className="h-[50px] flex-1 text-base"
                                 disabled={
                                     step === 0
                                         ? !selectionComplete
@@ -559,7 +556,7 @@ export default function PublicAppointmentBooking({
                         ) : (
                             <Button
                                 type="button"
-                                className="flex-1"
+                                className="h-[50px] flex-1 text-base"
                                 disabled={processing}
                                 onClick={handleSubmit}
                                 data-test="appointment-save-button"

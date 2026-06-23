@@ -1,5 +1,4 @@
 import InputError from '@/components/input-error';
-import BookingSummary from '@/components/public-booking/booking-summary';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PhoneInput } from '@/components/ui/phone-input';
@@ -16,24 +15,13 @@ type Props = {
     values: CustomerDetails;
     onChange: (field: keyof CustomerDetails, value: string) => void;
     errors: Partial<Record<string, string>>;
-    summary: {
-        serviceTitle?: string;
-        metaLabel?: string;
-        specialistName?: string;
-        locationName?: string | null;
-        dateTimeLabel?: string;
-    };
 };
 
 /**
- * Step three: personal information plus a recap of the booking so far.
+ * Step three: personal information. The booking recap lives in the inline
+ * summary bar at the top of the flow.
  */
-export default function StepDetails({
-    values,
-    onChange,
-    errors,
-    summary,
-}: Props) {
+export default function StepDetails({ values, onChange, errors }: Props) {
     return (
         <div className="space-y-6">
             <section className="space-y-4">
@@ -43,6 +31,7 @@ export default function StepDetails({
                     <Label htmlFor="customer_name">Name surname</Label>
                     <Input
                         id="customer_name"
+                        className="h-12"
                         value={values.customer_name}
                         onChange={(event) =>
                             onChange('customer_name', event.target.value)
@@ -59,6 +48,7 @@ export default function StepDetails({
                     <Input
                         id="customer_email"
                         type="email"
+                        className="h-12"
                         value={values.customer_email}
                         onChange={(event) =>
                             onChange('customer_email', event.target.value)
@@ -74,6 +64,7 @@ export default function StepDetails({
                     <Label htmlFor="customer_phone">Phone</Label>
                     <PhoneInput
                         id="customer_phone"
+                        className="h-12"
                         value={values.customer_phone}
                         onChange={(event) =>
                             onChange('customer_phone', event.target.value)
@@ -99,11 +90,6 @@ export default function StepDetails({
                     />
                     <InputError message={errors.notes} />
                 </div>
-            </section>
-
-            <section className="space-y-3">
-                <h2 className="text-sm font-medium">Booking summary</h2>
-                <BookingSummary {...summary} />
             </section>
         </div>
     );

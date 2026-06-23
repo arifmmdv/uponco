@@ -1,0 +1,68 @@
+import { CalendarClock, MapPin, Scissors, Sparkles, User } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+type Chip = {
+    icon: LucideIcon;
+    value: string;
+};
+
+type Props = {
+    serviceTitle?: string;
+    metaLabel?: string;
+    specialistName?: string;
+    locationName?: string | null;
+    dateTimeLabel?: string;
+};
+
+/**
+ * A live, inline recap of the booking shown at the top of the flow. Each choice
+ * pops in as a pill as the user makes it, so it doubles as both progress and
+ * summary without a separate stepper.
+ */
+export default function SummaryBar({
+    serviceTitle,
+    specialistName,
+    locationName,
+    dateTimeLabel,
+}: Props) {
+    const chips: Chip[] = [];
+
+    if (serviceTitle) {
+        chips.push({ icon: Scissors, value: serviceTitle });
+    }
+
+    if (specialistName) {
+        chips.push({ icon: User, value: specialistName });
+    }
+
+    if (locationName) {
+        chips.push({ icon: MapPin, value: locationName });
+    }
+
+    if (dateTimeLabel) {
+        chips.push({ icon: CalendarClock, value: dateTimeLabel });
+    }
+
+    if (chips.length === 0) {
+        return (
+            <div className="flex items-center justify-center gap-2 rounded-full border border-dashed bg-muted/40 py-2.5 text-xs text-muted-foreground">
+                <Sparkles className="size-3.5" />
+                Let&apos;s build your booking
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-wrap items-center gap-1.5">
+            {chips.map((chip) => (
+                <span
+                    key={chip.value}
+                    className="inline-flex max-w-full animate-in items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-xs font-medium shadow-xs duration-300 fade-in-0 zoom-in-95"
+                >
+                    <chip.icon className="size-3.5 shrink-0 text-primary" />
+                    <span className="truncate">{chip.value}</span>
+                </span>
+            ))}
+        </div>
+    );
+}
