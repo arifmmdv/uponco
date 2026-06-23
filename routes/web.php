@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\Company\BrandController;
 use App\Http\Controllers\Company\BusinessController;
 use App\Http\Controllers\Company\BusinessInvitationController;
 use App\Http\Controllers\Company\BusinessMemberController;
@@ -33,6 +34,8 @@ Route::prefix('{current_team}')
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
         Route::get('company', [CompanyController::class, 'index'])->name('company.index');
+
+        Route::get('company/brand', [BrandController::class, 'index'])->name('company.brand.index');
 
         Route::get('company/work-profile', [WorkProfileController::class, 'edit'])->name('company.work-profile.edit');
         Route::patch('company/work-profile', [WorkProfileController::class, 'update'])->name('company.work-profile.update');

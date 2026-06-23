@@ -1,9 +1,17 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Building2, ChevronRight, MapPin, UserCog, Wrench } from 'lucide-react';
+import {
+    Building2,
+    ChevronRight,
+    MapPin,
+    Palette,
+    UserCog,
+    Wrench,
+} from 'lucide-react';
 
 import Heading from '@/components/heading';
 import { Card, CardContent } from '@/components/ui/card';
 import { index as companyIndex } from '@/routes/company';
+import { index as brandIndex } from '@/routes/company/brand';
 import { edit as editBusiness } from '@/routes/company/business';
 import { index as locationsIndex } from '@/routes/company/locations';
 import { index as servicesIndex } from '@/routes/company/services';
@@ -50,6 +58,13 @@ export default function CompanyIndex({ stats }: Props) {
             icon: Wrench,
             count: stats.services,
             href: servicesIndex(teamSlug),
+        },
+        {
+            title: 'Brand',
+            description: 'Manage your company brand and visual identity.',
+            icon: Palette,
+            count: undefined,
+            href: brandIndex(teamSlug),
         },
     ];
 
