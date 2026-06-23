@@ -1,9 +1,14 @@
-import type { DeliveryType } from './services';
+import type { DeliveryType, PriceType } from './services';
 
 export type AppointmentServiceOption = {
     id: number;
     title: string;
+    description: string | null;
     duration: number;
+    price_type: PriceType;
+    price: string | null;
+    price_min: string | null;
+    price_max: string | null;
     delivery_type: DeliveryType;
     category_id: number;
     category_name: string;
@@ -18,11 +23,21 @@ export type AppointmentLocationOption = {
     specialist_ids: number[];
 };
 
+export type SpecialistAvailabilityPreview = {
+    /** `YYYY-MM-DD` of the nearest working day. */
+    date: string;
+    /** Human label for that day, e.g. "Today", "Tomorrow" or "Mon, 24 Jun". */
+    label: string;
+    /** A few half-hour start labels (HH:MM) across that day's work window. */
+    slots: string[];
+};
+
 export type AppointmentSpecialistOption = {
     id: number;
     name: string;
     service_ids: number[];
     location_ids: number[];
+    next_available: SpecialistAvailabilityPreview | null;
 };
 
 export type AppointmentSlot = {

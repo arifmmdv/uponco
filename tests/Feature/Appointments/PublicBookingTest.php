@@ -2,6 +2,7 @@
 
 use App\Models\Appointment;
 use App\Models\Customer;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('the public booking page can be rendered', function () {
     $setup = bookableSetup();
@@ -9,6 +10,28 @@ test('the public booking page can be rendered', function () {
     $this
         ->get(route('public.appointments.show', ['company' => $setup['team']->slug]))
         ->assertOk();
+});
+
+test('the booking page exposes service pricing and specialist availability', function () {
+    $setup = bookableSetup();
+
+    $this
+        ->get(route('public.appointments.show', ['company' => $setup['team']->slug]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('public/appointments/book')
+            ->where('company.name', $setup['team']->name)
+            ->has('services.0', fn (Assert $service) => $service
+                ->where('id', $setup['service']->id)
+                ->has('price_type')
+                ->has('duration')
+                ->etc(),
+            )
+            ->has('specialists.0.next_available', fn (Assert $preview) => $preview
+                ->has('date')
+                ->has('label')
+                ->has('slots'),
+            ),
+        );
 });
 
 test('a guest can book an appointment and a customer is created', function () {

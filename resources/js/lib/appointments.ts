@@ -1,8 +1,14 @@
 import type {
+    Appointment,
     AppointmentLocationOption,
     AppointmentServiceOption,
     AppointmentSpecialistOption,
 } from '@/types';
+
+const priceFormatter = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+});
 
 export type AppointmentSelection = {
     serviceId: number | null;
@@ -132,4 +138,160 @@ export function formatAppointmentTimeRange(
     });
 
     return `${formatter.format(new Date(startIso))} – ${formatter.format(new Date(endIso))}`;
+}
+
+export type UpcomingDay = {
+    /** `YYYY-MM-DD` value passed to the slot generator. */
+    date: string;
+    weekday: string;
+    day: string;
+    month: string;
+    isToday: boolean;
+    isTomorrow: boolean;
+};
+
+/**
+ * Build a list of the next `count` calendar days for the horizontal day picker.
+ */
+export function buildUpcomingDays(count: number): UpcomingDay[] {
+    const weekdayFormatter = new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+    });
+    const monthFormatter = new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+    });
+
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: count }, (_, index) => {
+        const current = new Date(base);
+        current.setDate(base.getDate() + index);
+
+        const date = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+
+        return {
+            date,
+            weekday: weekdayFormatter.format(current),
+            day: String(current.getDate()),
+            month: monthFormatter.format(current),
+            isToday: index === 0,
+            isTomorrow: index === 1,
+        };
+    });
+}
+
+/**
+ * Format a service duration in minutes as a short human label, e.g. "1h 30m".
+ */
+export function formatDuration(minutes: number): string {
+    if (minutes < 60) {
+        return `${minutes} min`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+
+    return remainder === 0 ? `${hours}h` : `${hours}h ${remainder}m`;
+}
+
+/**
+ * Format a service's price into a short display string based on its price type.
+ */
+export function formatServicePrice(service: AppointmentServiceOption): string {
+    switch (service.price_type) {
+        case 'free':
+            return 'Free';
+        case 'range':
+            if (service.price_min && service.price_max) {
+                return `${priceFormatter.format(Number(service.price_min))}–${priceFormatter.format(Number(service.price_max))}`;
+            }
+
+            return service.price
+                ? priceFormatter.format(Number(service.price))
+                : '';
+        case 'fixed':
+        default:
+            return service.price
+                ? priceFormatter.format(Number(service.price))
+                : '';
+    }
+}
+
+/**
+ * Label a day relative to now: "Today", "Yesterday" and "Tomorrow" are spelled
+ * out, every other day reads like "8 Jun 2026, Mon". Comparisons happen in the
+ * given timezone so day boundaries match the appointment's location.
+ */
+export function dayLabel(iso: string, timezone: string): string {
+    const target = toDateInputValue(iso, timezone);
+    const now = Date.now();
+    const day = 24 * 60 * 60 * 1000;
+
+    if (target === toDateInputValue(new Date(now).toISOString(), timezone)) {
+        return 'Today';
+    }
+
+    if (
+        target === toDateInputValue(new Date(now + day).toISOString(), timezone)
+    ) {
+        return 'Tomorrow';
+    }
+
+    if (
+        target === toDateInputValue(new Date(now - day).toISOString(), timezone)
+    ) {
+        return 'Yesterday';
+    }
+
+    const date = new Date(iso);
+    const part = (options: Intl.DateTimeFormatOptions) =>
+        new Intl.DateTimeFormat('en', {
+            timeZone: timezone,
+            ...options,
+        }).format(date);
+
+    return `${part({ day: 'numeric' })} ${part({ month: 'short' })} ${part({
+        year: 'numeric',
+    })}, ${part({ weekday: 'short' })}`;
+}
+
+export type AppointmentDayGroup = {
+    /** `YYYY-MM-DD` key used to bucket appointments by calendar day. */
+    key: string;
+    label: string;
+    appointments: Appointment[];
+};
+
+/**
+ * Bucket appointments into per-day groups, preserving the input order so the
+ * caller controls the direction (ascending for upcoming, descending for past).
+ */
+export function groupAppointmentsByDay(
+    appointments: Appointment[],
+): AppointmentDayGroup[] {
+    const groups: AppointmentDayGroup[] = [];
+    const byKey = new Map<string, AppointmentDayGroup>();
+
+    for (const appointment of appointments) {
+        const key = toDateInputValue(
+            appointment.start_at,
+            appointment.timezone,
+        );
+        let group = byKey.get(key);
+
+        if (!group) {
+            group = {
+                key,
+                label: dayLabel(appointment.start_at, appointment.timezone),
+                appointments: [],
+            };
+            byKey.set(key, group);
+            groups.push(group);
+        }
+
+        group.appointments.push(appointment);
+    }
+
+    return groups;
 }
