@@ -2,6 +2,8 @@
 
 use App\Models\Appointment;
 use App\Models\Customer;
+use App\Notifications\Appointments\AppointmentBooked;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('the public booking page can be rendered', function () {
@@ -53,6 +55,20 @@ test('a guest can book an appointment and a customer is created', function () {
         'specialist_id' => $setup['user']->id,
         'delivery_type' => 'onsite',
     ]);
+});
+
+test('a guest booking emails the confirmation to the customer', function () {
+    Notification::fake();
+    $setup = bookableSetup();
+
+    $this
+        ->post(route('public.appointments.store', ['company' => $setup['team']->slug]), appointmentPayload($setup))
+        ->assertRedirect();
+
+    Notification::assertSentOnDemand(
+        AppointmentBooked::class,
+        fn (AppointmentBooked $notification, array $channels, object $notifiable): bool => $notifiable->routeNotificationFor('mail') === 'jane@example.com',
+    );
 });
 
 test('a guest booking reuses an existing customer with the same email', function () {

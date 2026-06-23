@@ -40,12 +40,7 @@ class PublicAppointmentController extends Controller
      */
     public function store(BookPublicAppointmentRequest $request, Team $company): RedirectResponse
     {
-        $customer = $this->resolveCustomer($company, $request->customerData());
-
-        $company->appointments()->create([
-            ...$request->appointmentData(),
-            'customer_id' => $customer->id,
-        ]);
+        $this->createAppointment($company, $request);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Your appointment has been booked.')]);
 

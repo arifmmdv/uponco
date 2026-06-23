@@ -2,18 +2,45 @@
 
 namespace App\Concerns;
 
+use App\Http\Requests\Appointments\SaveAppointmentRequest;
+use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\Appointments\AppointmentBooked;
 use App\Support\Appointments\SlotGenerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Shared booking helpers used by both the dashboard and public booking flows.
  */
 trait InteractsWithAppointmentBooking
 {
+    /**
+     * Create the appointment for the request and notify the customer by email.
+     *
+     * The booking confirmation is only sent when the customer supplied an email
+     * address; phone-only customers simply don't receive one.
+     */
+    protected function createAppointment(Team $team, SaveAppointmentRequest $request): Appointment
+    {
+        $customer = $this->resolveCustomer($team, $request->customerData());
+
+        $appointment = $team->appointments()->create([
+            ...$request->appointmentData(),
+            'customer_id' => $customer->id,
+        ]);
+
+        if ($customer->email) {
+            Notification::route('mail', $customer->email)
+                ->notify(new AppointmentBooked($appointment));
+        }
+
+        return $appointment;
+    }
+
     /**
      * Find or create the customer for the appointment within the team.
      *

@@ -44,12 +44,7 @@ class AppointmentController extends Controller
     {
         $team = $request->user()->currentTeam;
 
-        $customer = $this->resolveCustomer($team, $request->customerData());
-
-        $team->appointments()->create([
-            ...$request->appointmentData(),
-            'customer_id' => $customer->id,
-        ]);
+        $this->createAppointment($team, $request);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Appointment created.')]);
 

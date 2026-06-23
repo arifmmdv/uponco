@@ -8,8 +8,10 @@ use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
 use App\Models\WorkHour;
+use App\Notifications\Appointments\AppointmentBooked;
 use App\Support\Appointments\SlotGenerator;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Build a fully related service/location/specialist scenario with work hours,
@@ -98,6 +100,66 @@ test('an appointment can be created and creates a customer', function () {
     $appointment = Appointment::first();
     expect($appointment->end_at->toIso8601String())
         ->toBe($setup['startAt']->addMinutes(60)->toIso8601String());
+});
+
+test('creating an appointment emails the booking details to the customer', function () {
+    Notification::fake();
+    $setup = bookableSetup();
+
+    $this
+        ->actingAs($setup['user'])
+        ->post(route('appointments.store', ['current_team' => $setup['team']->slug]), appointmentPayload($setup))
+        ->assertRedirect();
+
+    Notification::assertSentOnDemand(
+        AppointmentBooked::class,
+        fn (AppointmentBooked $notification, array $channels, object $notifiable): bool => $notifiable->routeNotificationFor('mail') === 'jane@example.com'
+            && $notification->appointment->service_id === $setup['service']->id,
+    );
+});
+
+test('the booking confirmation email contains the appointment details', function () {
+    $setup = bookableSetup();
+    $customer = Customer::factory()->for($setup['team'])->create([
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+    ]);
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'customer_id' => $customer->id,
+        'start_at' => $setup['startAt'],
+        'end_at' => $setup['startAt']->addMinutes(60),
+        'notes' => 'Please use the side entrance',
+    ]);
+
+    $mail = (new AppointmentBooked($appointment))->toMail($customer);
+
+    expect($mail->subject)->toContain($setup['team']->name);
+
+    $body = collect($mail->introLines)->implode("\n");
+    expect($body)
+        ->toContain($setup['service']->title)
+        ->toContain($setup['user']->name)
+        ->toContain($setup['location']->name)
+        ->toContain('Please use the side entrance');
+});
+
+test('no confirmation email is sent when the customer only provided a phone', function () {
+    Notification::fake();
+    $setup = bookableSetup();
+
+    $this
+        ->actingAs($setup['user'])
+        ->post(route('appointments.store', ['current_team' => $setup['team']->slug]), appointmentPayload($setup, [
+            'customer_email' => null,
+            'customer_phone' => '+1 555 010 2030',
+        ]))
+        ->assertRedirect();
+
+    Notification::assertNothingSent();
 });
 
 test('an appointment reuses an existing customer with the same email', function () {
