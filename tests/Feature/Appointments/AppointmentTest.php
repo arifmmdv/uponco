@@ -346,6 +346,84 @@ test('an appointment can be updated', function () {
     ]);
 });
 
+test('an appointment can be rescheduled to an available slot', function () {
+    $setup = bookableSetup();
+    $start = $setup['startAt']->addDay();
+
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'start_at' => $start,
+        'end_at' => $start->addMinutes(60),
+    ]);
+
+    $newStart = $start->setTime(13, 0);
+
+    $this
+        ->actingAs($setup['user'])
+        ->patch(route('appointments.reschedule', ['current_team' => $setup['team']->slug, 'appointment' => $appointment]), [
+            'start_at' => $newStart->toIso8601String(),
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('appointments', [
+        'id' => $appointment->id,
+        'start_at' => $newStart->toDateTimeString(),
+        'end_at' => $newStart->addMinutes(60)->toDateTimeString(),
+    ]);
+});
+
+test('an appointment cannot be rescheduled onto an unavailable slot', function () {
+    $setup = bookableSetup();
+    $start = $setup['startAt']->addDay();
+
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'start_at' => $start,
+        'end_at' => $start->addMinutes(60),
+    ]);
+
+    // Another booking already occupies 15:00 for the same specialist.
+    $blocker = $start->setTime(15, 0);
+    Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'specialist_id' => $setup['user']->id,
+        'start_at' => $blocker,
+        'end_at' => $blocker->addMinutes(60),
+    ]);
+
+    $this
+        ->actingAs($setup['user'])
+        ->patch(route('appointments.reschedule', ['current_team' => $setup['team']->slug, 'appointment' => $appointment]), [
+            'start_at' => $blocker->toIso8601String(),
+        ])
+        ->assertRedirect();
+
+    // The appointment keeps its original time.
+    $this->assertDatabaseHas('appointments', [
+        'id' => $appointment->id,
+        'start_at' => $start->toDateTimeString(),
+    ]);
+});
+
+test('an appointment from another team cannot be rescheduled', function () {
+    $setup = bookableSetup();
+    $otherAppointment = Appointment::factory()->create();
+
+    $this
+        ->actingAs($setup['user'])
+        ->patch(route('appointments.reschedule', ['current_team' => $setup['team']->slug, 'appointment' => $otherAppointment]), [
+            'start_at' => $setup['startAt']->toIso8601String(),
+        ])
+        ->assertForbidden();
+});
+
 test('an appointment can be deleted', function () {
     $setup = bookableSetup();
     $appointment = Appointment::factory()->create([

@@ -30,6 +30,7 @@ Route::prefix('{current_team}')
         Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store');
         Route::patch('appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+        Route::patch('appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
         Route::delete('appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
 
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');

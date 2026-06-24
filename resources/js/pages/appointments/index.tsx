@@ -1,10 +1,12 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { CalendarRange, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import AppointmentFormDrawer from '@/components/appointments/appointment-form-drawer';
 import type { SlotRequest } from '@/components/appointments/appointment-form-drawer';
 import AppointmentsTable from '@/components/appointments/appointments-table';
+import type { CalendarView } from '@/components/appointments/calendar/appointment-calendar';
+import AppointmentCalendar from '@/components/appointments/calendar/appointment-calendar';
 import DeleteAppointmentModal from '@/components/appointments/delete-appointment-modal';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -17,7 +19,10 @@ import {
 } from '@/components/ui/select';
 import { toDateInputValue } from '@/lib/appointments';
 import { cn } from '@/lib/utils';
-import { index as appointmentsIndex } from '@/routes/appointments';
+import {
+    index as appointmentsIndex,
+    reschedule as rescheduleRoute,
+} from '@/routes/appointments';
 import type {
     Appointment,
     AppointmentLocationOption,
@@ -36,10 +41,11 @@ type Props = {
 };
 
 type Tab = 'upcoming' | 'past';
-type View = 'minimal' | 'week' | 'month';
+type View = 'minimal' | CalendarView;
 
 const VIEW_OPTIONS: { value: View; label: string }[] = [
     { value: 'minimal', label: 'Minimal' },
+    { value: 'day', label: 'Day' },
     { value: 'week', label: 'Week' },
     { value: 'month', label: 'Month' },
 ];
@@ -57,6 +63,7 @@ export default function AppointmentsIndex({
 
     const [tab, setTab] = useState<Tab>('upcoming');
     const [view, setView] = useState<View>('minimal');
+    const [cursor, setCursor] = useState<Date>(() => new Date());
 
     const [formOpen, setFormOpen] = useState(false);
     const [editing, setEditing] = useState<Appointment | null>(null);
@@ -119,6 +126,18 @@ export default function AppointmentsIndex({
     const confirmDelete = (appointment: Appointment) => {
         setDeleting(appointment);
         setDeleteOpen(true);
+    };
+
+    const reschedule = (appointment: Appointment, startIso: string) => {
+        router.patch(
+            rescheduleRoute.url([teamSlug, appointment.id]),
+            { start_at: startIso },
+            {
+                only: ['appointments'],
+                preserveScroll: true,
+                preserveState: true,
+            },
+        );
     };
 
     const hasBookableResources = services.length > 0 && specialists.length > 0;
@@ -201,7 +220,16 @@ export default function AppointmentsIndex({
                         />
                     </div>
                 ) : (
-                    <ComingSoonView view={view} />
+                    <AppointmentCalendar
+                        view={view}
+                        date={cursor}
+                        onDateChange={setCursor}
+                        onViewChange={setView}
+                        appointments={appointments}
+                        timezone={timezone}
+                        onEditAppointment={openEdit}
+                        onReschedule={reschedule}
+                    />
                 )}
             </div>
 
@@ -269,20 +297,6 @@ function TabButton({
                 {count}
             </span>
         </button>
-    );
-}
-
-function ComingSoonView({ view }: { view: View }) {
-    return (
-        <div className="flex flex-col items-center rounded-lg border border-dashed p-12 text-center">
-            <div className="flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <CalendarRange className="size-5" />
-            </div>
-            <p className="mt-4 text-sm font-medium capitalize">{view} view</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-                This view is coming soon.
-            </p>
-        </div>
     );
 }
 

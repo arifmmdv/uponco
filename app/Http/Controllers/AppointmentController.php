@@ -6,6 +6,8 @@ use App\Concerns\InteractsWithAppointmentBooking;
 use App\Http\Requests\Appointments\SaveAppointmentRequest;
 use App\Models\Appointment;
 use App\Support\Appointments\AppointmentOptions;
+use App\Support\Appointments\SlotGenerator;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -68,6 +70,49 @@ class AppointmentController extends Controller
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Appointment updated.')]);
+
+        return back();
+    }
+
+    /**
+     * Move an existing appointment to a new start time (drag-and-drop).
+     *
+     * The slot is re-validated against the specialist's work hours and existing
+     * bookings so the appointment can never land on an unavailable time, even if
+     * the client allowed the drop.
+     */
+    public function reschedule(Request $request, string $current_team, Appointment $appointment): RedirectResponse
+    {
+        $this->authorizeAppointment($request, $appointment);
+
+        $data = $request->validate([
+            'start_at' => ['required', 'date'],
+        ]);
+
+        $team = $request->user()->currentTeam;
+        $timezone = $team->timezone ?: config('app.timezone');
+        $start = CarbonImmutable::parse($data['start_at'])->utc();
+
+        $available = SlotGenerator::isAvailableStart(
+            $appointment->service,
+            $appointment->specialist,
+            $timezone,
+            $start,
+            $appointment->id,
+        );
+
+        if (! $available) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => __('That time slot is not available.')]);
+
+            return back();
+        }
+
+        $appointment->update([
+            'start_at' => $start,
+            'end_at' => $start->addMinutes($appointment->service->duration),
+        ]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Appointment rescheduled.')]);
 
         return back();
     }
