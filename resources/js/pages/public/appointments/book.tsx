@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 import BookingFooter from '@/components/public-booking/booking-footer';
 import StepDateTime from '@/components/public-booking/step-datetime';
@@ -48,6 +49,14 @@ export default function PublicAppointmentBooking({
 
     const { step, confirmed } = booking;
 
+    // The public booking page is always presented in light theme, regardless of
+    // the visitor's system or stored appearance preference.
+    useEffect(() => {
+        const root = document.documentElement;
+        root.classList.remove('dark');
+        root.style.colorScheme = 'light';
+    }, []);
+
     return (
         <div className="flex min-h-svh w-full justify-center bg-muted/30">
             <Head title={`Book an appointment · ${company.name}`} />
@@ -96,7 +105,9 @@ export default function PublicAppointmentBooking({
                                     selectedSpecialist={
                                         booking.selectedSpecialist
                                     }
-                                    onServiceChange={booking.handleServiceChange}
+                                    onServiceChange={
+                                        booking.handleServiceChange
+                                    }
                                     onLocationChange={
                                         booking.handleLocationChange
                                     }

@@ -1,12 +1,15 @@
 import { Check } from 'lucide-react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { filterPreviewSlotsByDuration } from '@/lib/appointments';
 import { cn } from '@/lib/utils';
 import type { AppointmentSpecialistOption } from '@/types';
 
 type Props = {
     specialists: AppointmentSpecialistOption[];
     selectedId: number | null;
+    /** Duration (minutes) of the chosen service, used to filter preview slots. */
+    serviceDuration: number | null;
     onSelect: (specialistId: number) => void;
 };
 
@@ -29,6 +32,7 @@ function initials(name: string): string {
 export default function SpecialistPicker({
     specialists,
     selectedId,
+    serviceDuration,
     onSelect,
 }: Props) {
     if (specialists.length === 0) {
@@ -44,6 +48,15 @@ export default function SpecialistPicker({
             {specialists.map((specialist) => {
                 const isSelected = specialist.id === selectedId;
                 const preview = specialist.next_available;
+                // Once a service is chosen, only show the openings long enough
+                // to actually hold it (e.g. drop lone 30-min gaps for a 1h job).
+                const slots =
+                    preview && serviceDuration
+                        ? filterPreviewSlotsByDuration(
+                              preview.slots,
+                              serviceDuration,
+                          )
+                        : (preview?.slots ?? []);
 
                 return (
                     <button
@@ -80,22 +93,20 @@ export default function SpecialistPicker({
                                 </span>
                             </div>
 
-                            {preview ? (
+                            {preview && slots.length > 0 ? (
                                 <div className="mt-1.5">
                                     <p className="text-xs text-muted-foreground">
                                         Next available · {preview.label}
                                     </p>
                                     <div className="mt-1.5 flex flex-wrap gap-1">
-                                        {preview.slots
-                                            .slice(0, 4)
-                                            .map((slot) => (
-                                                <span
-                                                    key={slot}
-                                                    className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
-                                                >
-                                                    {slot}
-                                                </span>
-                                            ))}
+                                        {slots.slice(0, 4).map((slot) => (
+                                            <span
+                                                key={slot}
+                                                className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+                                            >
+                                                {slot}
+                                            </span>
+                                        ))}
                                     </div>
                                 </div>
                             ) : (

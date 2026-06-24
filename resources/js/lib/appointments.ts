@@ -182,6 +182,52 @@ export function buildUpcomingDays(count: number): UpcomingDay[] {
 }
 
 /**
+ * Filter a list of half-hour preview start times down to the ones where a
+ * service of the given duration actually fits — i.e. enough back-to-back free
+ * 30-minute blocks start at that time. A 30-minute opening shouldn't be offered
+ * for a one-hour service, so the specialist preview stays honest once a service
+ * (and therefore a duration) has been chosen.
+ */
+export function filterPreviewSlotsByDuration(
+    slots: string[],
+    durationMinutes: number,
+): string[] {
+    const step = 30;
+    const blocksNeeded = Math.max(1, Math.ceil(durationMinutes / step));
+
+    if (blocksNeeded === 1) {
+        return slots;
+    }
+
+    const available = new Set(slots);
+
+    const toMinutes = (value: string): number => {
+        const [hours, minutes] = value.split(':').map(Number);
+
+        return hours * 60 + minutes;
+    };
+
+    const toLabel = (total: number): string => {
+        const hours = Math.floor(total / 60);
+        const minutes = total % 60;
+
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    };
+
+    return slots.filter((slot) => {
+        const start = toMinutes(slot);
+
+        for (let index = 1; index < blocksNeeded; index++) {
+            if (!available.has(toLabel(start + index * step))) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+}
+
+/**
  * Format a service duration in minutes as a short human label, e.g. "1h 30m".
  */
 export function formatDuration(minutes: number): string {

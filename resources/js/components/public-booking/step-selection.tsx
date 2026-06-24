@@ -76,6 +76,7 @@ export default function StepSelection({
                 <SpecialistPicker
                     specialists={specialists}
                     selectedId={specialistId}
+                    serviceDuration={selectedService?.duration ?? null}
                     onSelect={onSpecialistChange}
                 />
             </ExpandableCard>
