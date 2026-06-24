@@ -3,6 +3,7 @@
 namespace App\Notifications\Appointments;
 
 use App\Models\Appointment;
+use App\Support\Appointments\AppointmentCalendar;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -60,6 +61,11 @@ class AppointmentBooked extends Notification implements ShouldQueue
                 __('**Notes:** :notes', ['notes' => $appointment->notes]),
             ))
             ->line(__('If you need to make any changes, just reply to this email and we will help you out.'))
-            ->salutation(__('See you soon, :team', ['team' => $team->name]));
+            ->salutation(__('See you soon, :team', ['team' => $team->name]))
+            ->attachData(
+                AppointmentCalendar::ics($appointment),
+                'appointment.ics',
+                ['mime' => 'text/calendar; charset=utf-8; method=PUBLISH'],
+            );
     }
 }

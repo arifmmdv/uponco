@@ -1,7 +1,9 @@
-import { Check } from 'lucide-react';
+import { Apple, Calendar, Check } from 'lucide-react';
 
 import BookingSummary from '@/components/public-booking/booking-summary';
 import { Button } from '@/components/ui/button';
+import type { CalendarEvent } from '@/lib/calendar';
+import { buildGoogleCalendarUrl, downloadIcsFile } from '@/lib/calendar';
 
 type Props = {
     companyName: string;
@@ -13,6 +15,7 @@ type Props = {
         locationName?: string | null;
         dateTimeLabel?: string;
     };
+    calendar: CalendarEvent | null;
     onBookAnother: () => void;
 };
 
@@ -23,6 +26,7 @@ export default function SuccessScreen({
     companyName,
     customerName,
     summary,
+    calendar,
     onBookAnother,
 }: Props) {
     return (
@@ -43,9 +47,38 @@ export default function SuccessScreen({
                 <BookingSummary {...summary} />
             </div>
 
+            {calendar && (
+                <div className="mt-6 w-full space-y-2 text-left">
+                    <p className="text-xs font-medium text-muted-foreground">
+                        Add to your calendar
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button variant="outline" className="h-11" asChild>
+                            <a
+                                href={buildGoogleCalendarUrl(calendar)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Calendar className="size-4" />
+                                Google
+                            </a>
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-11"
+                            onClick={() => downloadIcsFile(calendar)}
+                        >
+                            <Apple className="size-4" />
+                            Apple
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             <Button
                 variant="outline"
-                className="mt-6 h-12 w-full text-base"
+                className="mt-4 h-12 w-full text-base"
                 onClick={onBookAnother}
             >
                 Book another appointment

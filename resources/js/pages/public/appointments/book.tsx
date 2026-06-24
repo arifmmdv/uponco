@@ -72,6 +72,7 @@ export default function PublicAppointmentBooking({
                             companyName={company.name}
                             customerName={confirmed.customerName}
                             summary={confirmed}
+                            calendar={confirmed.calendar}
                             onBookAnother={booking.resetFlow}
                         />
                     ) : (

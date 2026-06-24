@@ -147,6 +147,35 @@ test('the booking confirmation email contains the appointment details', function
         ->toContain('Please use the side entrance');
 });
 
+test('the booking confirmation email attaches a calendar invite', function () {
+    $setup = bookableSetup();
+    $customer = Customer::factory()->for($setup['team'])->create([
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+    ]);
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'customer_id' => $customer->id,
+        'start_at' => $setup['startAt'],
+        'end_at' => $setup['startAt']->addMinutes(60),
+    ]);
+
+    $mail = (new AppointmentBooked($appointment))->toMail($customer);
+
+    $attachment = collect($mail->rawAttachments)->firstWhere('name', 'appointment.ics');
+
+    expect($attachment)->not->toBeNull();
+    expect($attachment['data'])
+        ->toContain('BEGIN:VCALENDAR')
+        ->toContain('BEGIN:VEVENT')
+        ->toContain('DTSTART:'.$appointment->start_at->copy()->utc()->format('Ymd\THis\Z'))
+        ->toContain('DTEND:'.$appointment->end_at->copy()->utc()->format('Ymd\THis\Z'))
+        ->toContain($setup['service']->title);
+});
+
 test('no confirmation email is sent when the customer only provided a phone', function () {
     Notification::fake();
     $setup = bookableSetup();

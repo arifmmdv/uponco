@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 import type { CustomerDetails } from '@/components/public-booking/step-details';
+import type { CalendarEvent } from '@/lib/calendar';
 import {
     buildUpcomingDays,
     formatAppointmentDay,
@@ -31,6 +32,7 @@ export type BookingSummary = {
 
 export type ConfirmedSummary = BookingSummary & {
     customerName: string;
+    calendar: CalendarEvent | null;
 };
 
 const EMPTY_DETAILS: CustomerDetails = {
@@ -330,6 +332,28 @@ export function useAppointmentBooking({
         dateTimeLabel,
     };
 
+    const calendarEvent: CalendarEvent | null =
+        selectedService && selectedStart && selectedEnd
+            ? {
+                  title: `${selectedService.title} · ${company.name}`,
+                  start: selectedStart,
+                  end: selectedEnd,
+                  location:
+                      requiresLocation && selectedLocation
+                          ? selectedLocation.name
+                          : undefined,
+                  description:
+                      [
+                          selectedSpecialist
+                              ? `With ${selectedSpecialist.name}`
+                              : null,
+                          details.notes.trim() || null,
+                      ]
+                          .filter(Boolean)
+                          .join('\n') || undefined,
+              }
+            : null;
+
     const goToStep = (next: number) => {
         setDirection(next > step ? 'forward' : 'back');
         setHasNavigated(true);
@@ -382,6 +406,7 @@ export function useAppointmentBooking({
                     setConfirmed({
                         ...summary,
                         customerName: details.customer_name,
+                        calendar: calendarEvent,
                     });
                 },
                 onFinish: () => setProcessing(false),
