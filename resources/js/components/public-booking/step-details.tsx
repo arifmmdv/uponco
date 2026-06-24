@@ -1,7 +1,7 @@
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
+import { InternationalPhoneInput } from '@/components/ui/international-phone-input';
 import { Label } from '@/components/ui/label';
-import { PhoneInput } from '@/components/ui/phone-input';
 import { Textarea } from '@/components/ui/textarea';
 
 export type CustomerDetails = {
@@ -62,14 +62,12 @@ export default function StepDetails({ values, onChange, errors }: Props) {
 
                 <div className="grid gap-2">
                     <Label htmlFor="customer_phone">Phone</Label>
-                    <PhoneInput
+                    <InternationalPhoneInput
                         id="customer_phone"
                         className="h-12"
                         value={values.customer_phone}
-                        onChange={(event) =>
-                            onChange('customer_phone', event.target.value)
-                        }
-                        placeholder="+1 555 123 4567"
+                        onChange={(next) => onChange('customer_phone', next)}
+                        placeholder="555 123 4567"
                         aria-invalid={Boolean(errors.customer_phone)}
                         data-test="appointment-customer-phone-input"
                     />
@@ -85,7 +83,7 @@ export default function StepDetails({ values, onChange, errors }: Props) {
                             onChange('notes', event.target.value)
                         }
                         placeholder="Anything we should know before your visit…"
-                        rows={3}
+                        rows={4}
                         data-test="appointment-notes-input"
                     />
                     <InputError message={errors.notes} />

@@ -44,7 +44,7 @@ export default function StepDateTime({
             <section className="space-y-3">
                 <h2 className="text-sm font-medium">Choose a day</h2>
 
-                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                <div className="-mx-1 flex [scrollbar-width:thin] [scrollbar-color:var(--color-primary)_transparent] gap-2 overflow-x-auto px-1 pt-1 pb-3 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/70 [&::-webkit-scrollbar-track]:bg-transparent">
                     {days.map((day) => {
                         const isSelected = day.date === date;
 

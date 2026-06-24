@@ -45,7 +45,7 @@ export default function SuccessScreen({
 
             <Button
                 variant="outline"
-                className="mt-6 w-full"
+                className="mt-6 h-12 w-full text-base"
                 onClick={onBookAnother}
             >
                 Book another appointment

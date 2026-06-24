@@ -45,7 +45,7 @@ export default function SummaryBar({
 
     if (chips.length === 0) {
         return (
-            <div className="flex items-center justify-center gap-2 rounded-full border border-dashed bg-muted/40 py-2.5 text-xs text-muted-foreground">
+            <div className="flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl border border-dashed bg-muted/40 px-3 text-xs text-muted-foreground">
                 <Sparkles className="size-3.5" />
                 Let&apos;s build your booking
             </div>
@@ -53,7 +53,7 @@ export default function SummaryBar({
     }
 
     return (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex min-h-[3.5rem] flex-wrap content-start items-start gap-1.5">
             {chips.map((chip) => (
                 <span
                     key={chip.value}
