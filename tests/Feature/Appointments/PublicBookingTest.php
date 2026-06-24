@@ -3,6 +3,7 @@
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Notifications\Appointments\AppointmentBooked;
+use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -69,6 +70,24 @@ test('a guest booking emails the confirmation to the customer', function () {
         AppointmentBooked::class,
         fn (AppointmentBooked $notification, array $channels, object $notifiable): bool => $notifiable->routeNotificationFor('mail') === 'jane@example.com',
     );
+});
+
+test('a guest booking still succeeds when the confirmation notification cannot be dispatched', function () {
+    $setup = bookableSetup();
+
+    $this->mock(Dispatcher::class, function ($mock): void {
+        $mock->shouldReceive('send')->andThrow(new RuntimeException('queue unavailable'));
+    });
+
+    $this
+        ->post(route('public.appointments.store', ['company' => $setup['team']->slug]), appointmentPayload($setup))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('appointments', [
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+    ]);
 });
 
 test('a guest booking reuses an existing customer with the same email', function () {

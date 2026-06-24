@@ -34,8 +34,12 @@ trait InteractsWithAppointmentBooking
         ]);
 
         if ($customer->email) {
-            Notification::route('mail', $customer->email)
-                ->notify(new AppointmentBooked($appointment));
+            try {
+                Notification::route('mail', $customer->email)
+                    ->notify(new AppointmentBooked($appointment));
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
         return $appointment;
