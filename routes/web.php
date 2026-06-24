@@ -15,9 +15,61 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PublicAppointmentController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+/**
+ * Temporary diagnostic endpoint to verify mail + queue delivery.
+ *
+ * - GET /send-test-email           sends synchronously (tests the mailer only).
+ * - GET /send-test-email?queue=1   pushes a queued job (tests the full queue path).
+ */
+Route::get('send-test-email', function (Request $request) {
+    $recipient = 'arif.mmdv@gmail.com';
+    $sentAt = now()->toDateTimeString();
+
+    $send = function () use ($recipient, $sentAt): void {
+        Mail::raw("This is a test email from Uponco.\nSent at: {$sentAt}", function ($message) use ($recipient): void {
+            $message->to($recipient)->subject('Uponco test email');
+        });
+    };
+
+    $diagnostics = [
+        'recipient' => $recipient,
+        'mailer' => config('mail.default'),
+        'queue_connection' => config('queue.default'),
+        'sent_at' => $sentAt,
+    ];
+
+    if ($request->boolean('queue')) {
+        dispatch($send);
+
+        return response()->json([
+            'status' => 'queued',
+            'message' => 'Job pushed to the queue. The email is only delivered once a worker processes it.',
+            ...$diagnostics,
+        ]);
+    }
+
+    try {
+        $send();
+
+        return response()->json([
+            'status' => 'sent',
+            'message' => 'Mail handed off to the mailer synchronously. Check the inbox.',
+            ...$diagnostics,
+        ]);
+    } catch (Throwable $e) {
+        return response()->json([
+            'status' => 'failed',
+            'error' => $e->getMessage(),
+            ...$diagnostics,
+        ], 500);
+    }
+});
 
 Route::get('appointments/{company}', [PublicAppointmentController::class, 'show'])->name('public.appointments.show');
 Route::post('appointments/{company}', [PublicAppointmentController::class, 'store'])->name('public.appointments.store');
