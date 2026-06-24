@@ -2,7 +2,6 @@ import { router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 import type { CustomerDetails } from '@/components/public-booking/step-details';
-import type { CalendarEvent } from '@/lib/calendar';
 import {
     buildUpcomingDays,
     formatAppointmentDay,
@@ -12,6 +11,7 @@ import {
     getAvailableOptions,
     groupServicesByCategory,
 } from '@/lib/appointments';
+import type { CalendarEvent } from '@/lib/calendar';
 import { store } from '@/routes/public/appointments';
 import type {
     AppointmentLocationOption,
@@ -65,8 +65,6 @@ export function useAppointmentBooking({
     specialists,
     availableSlots,
 }: Params) {
-    const upcomingDays = useMemo(() => buildUpcomingDays(14), []);
-
     const [step, setStep] = useState(0);
     const [hasNavigated, setHasNavigated] = useState(false);
     const [direction, setDirection] = useState<'forward' | 'back'>('forward');
@@ -120,6 +118,17 @@ export function useAppointmentBooking({
         () => specialists.find((item) => item.id === specialistId) ?? null,
         [specialists, specialistId],
     );
+
+    // The day strip covers the next two weeks; only the days the selected
+    // specialist actually has a free slot on are bookable (and clickable).
+    const upcomingDays = useMemo(() => {
+        const bookable = new Set(selectedSpecialist?.available_days ?? []);
+
+        return buildUpcomingDays(14).map((day) => ({
+            ...day,
+            available: bookable.has(day.date),
+        }));
+    }, [selectedSpecialist]);
 
     const requiresLocation =
         selectedService !== null && selectedService.delivery_type !== 'online';
@@ -362,9 +371,20 @@ export function useAppointmentBooking({
 
     const handleContinue = () => {
         if (step === 0) {
-            // Default the day to the specialist's nearest availability.
-            if (date === '' && selectedSpecialist?.next_available) {
-                handleDateChange(selectedSpecialist.next_available.date);
+            // Default to (or fall back to) the specialist's closest bookable
+            // day, re-picking whenever the current day isn't one they can take.
+            const bookableDays = selectedSpecialist?.available_days ?? [];
+
+            if (date === '' || !bookableDays.includes(date)) {
+                const closest = bookableDays[0] ?? '';
+
+                if (closest === '') {
+                    setDate('');
+                    setSelectedStart('');
+                    setSelectedEnd('');
+                } else {
+                    handleDateChange(closest);
+                }
             }
 
             goToStep(1);

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import type { AppointmentSlot } from '@/types';
 
 type Props = {
-    days: UpcomingDay[];
+    days: (UpcomingDay & { available: boolean })[];
     date: string;
     onDateChange: (date: string) => void;
     timezone: string;
@@ -52,12 +52,15 @@ export default function StepDateTime({
                             <button
                                 key={day.date}
                                 type="button"
+                                disabled={!day.available}
                                 onClick={() => onDateChange(day.date)}
                                 className={cn(
                                     'flex w-14 shrink-0 flex-col items-center rounded-xl border py-2.5 transition-all duration-200',
                                     isSelected
                                         ? 'border-primary bg-primary text-primary-foreground'
                                         : 'border-border bg-card hover:border-primary/40',
+                                    !day.available &&
+                                        'cursor-not-allowed opacity-40 hover:border-border',
                                 )}
                             >
                                 <span

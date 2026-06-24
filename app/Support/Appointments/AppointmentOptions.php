@@ -2,12 +2,14 @@
 
 namespace App\Support\Appointments;
 
+use App\Models\Appointment;
 use App\Models\Location;
 use App\Models\Service;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\WorkHour;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 /**
@@ -72,7 +74,7 @@ class AppointmentOptions
     /**
      * Get the team's specialists, including their service and location relationships.
      *
-     * @return array<int, array{id: int, name: string, service_ids: array<int, int>, location_ids: array<int, int>, next_available: ?array{date: string, label: string, slots: array<int, string>}}>
+     * @return array<int, array{id: int, name: string, service_ids: array<int, int>, location_ids: array<int, int>, next_available: ?array{date: string, label: string, slots: array<int, string>}, available_days: array<int, string>}>
      */
     public static function specialists(Team $team): array
     {
@@ -82,36 +84,49 @@ class AppointmentOptions
             ->with(['services:id', 'locations:id', 'workHours'])
             ->orderBy('name')
             ->get()
-            ->map(fn (User $member): array => [
-                'id' => $member->id,
-                'name' => $member->name,
-                'service_ids' => $member->services->pluck('id')->all(),
-                'location_ids' => $member->locations->pluck('id')->all(),
-                'next_available' => static::nextAvailablePreview($member, $timezone),
-            ])
+            ->map(function (User $member) use ($timezone): array {
+                $availability = static::availability($member, $timezone);
+
+                return [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'service_ids' => $member->services->pluck('id')->all(),
+                    'location_ids' => $member->locations->pluck('id')->all(),
+                    'next_available' => $availability['preview'],
+                    'available_days' => $availability['days'],
+                ];
+            })
             ->all();
     }
 
     /**
-     * Build a lightweight "nearest working day" preview for a specialist.
+     * Scan the upcoming days for the specialist's genuinely bookable days.
      *
-     * This scans the upcoming days for the first one the specialist works and
-     * returns a handful of half-hour time labels across that day's work window.
-     * It is a teaser only — the real bookable slots are generated per service
-     * once a service, specialist and date have all been chosen.
+     * A day counts as available when the specialist works it and at least one
+     * future half-hour slot is not already taken by an existing appointment.
+     * The first such day also seeds a lightweight "next available" preview with
+     * a handful of free time labels. Both are teasers only — the real bookable
+     * slots are generated per service once a service, specialist and date have
+     * all been chosen.
      *
-     * @return ?array{date: string, label: string, slots: array<int, string>}
+     * @return array{days: array<int, string>, preview: ?array{date: string, label: string, slots: array<int, string>}}
      */
-    protected static function nextAvailablePreview(User $specialist, string $timezone): ?array
+    protected static function availability(User $specialist, string $timezone): array
     {
         if ($specialist->workHours->isEmpty()) {
-            return null;
+            return ['days' => [], 'preview' => null];
         }
 
         $now = CarbonImmutable::now($timezone);
+        $windowStart = $now->startOfDay();
+
+        $booked = static::bookedIntervals($specialist, $windowStart, $windowStart->addDays(14));
+
+        $days = [];
+        $preview = null;
 
         for ($offset = 0; $offset < 14; $offset++) {
-            $day = $now->addDays($offset)->startOfDay();
+            $day = $windowStart->addDays($offset);
             $dayOfWeek = $day->dayOfWeekIso - 1; // 0 = Monday ... 6 = Sunday
 
             $hours = $specialist->workHours
@@ -122,32 +137,39 @@ class AppointmentOptions
                 continue;
             }
 
-            $slots = static::previewSlots($hours, $day, $now, $offset === 0);
+            $slots = static::previewSlots($hours, $day, $now, $booked, $offset === 0);
 
             if ($slots === []) {
                 continue;
             }
 
-            return [
-                'date' => $day->format('Y-m-d'),
-                'label' => $day->isToday() ? 'Today' : ($day->isTomorrow() ? 'Tomorrow' : $day->format('D, j M')),
-                'slots' => $slots,
-            ];
+            $days[] = $day->format('Y-m-d');
+
+            if ($preview === null) {
+                $preview = [
+                    'date' => $day->format('Y-m-d'),
+                    'label' => $day->isToday() ? 'Today' : ($day->isTomorrow() ? 'Tomorrow' : $day->format('D, j M')),
+                    'slots' => $slots,
+                ];
+            }
         }
 
-        return null;
+        return ['days' => $days, 'preview' => $preview];
     }
 
     /**
-     * Generate half-hour preview time labels across a specialist's work windows.
+     * Generate free half-hour preview time labels across a specialist's work
+     * windows, skipping past times and slots overlapping existing appointments.
      *
      * @param  Collection<int, WorkHour>  $hours
+     * @param  Collection<int, array{0: CarbonInterface, 1: CarbonInterface}>  $booked
      * @return array<int, string>
      */
     protected static function previewSlots(
         Collection $hours,
         CarbonImmutable $day,
         CarbonImmutable $now,
+        Collection $booked,
         bool $isToday,
     ): array {
         $slots = [];
@@ -157,7 +179,11 @@ class AppointmentOptions
             $end = $day->setTimeFromTimeString($window->end_time);
 
             while ($cursor < $end && count($slots) < 12) {
-                if (! $isToday || $cursor->greaterThan($now)) {
+                $slotEnd = $cursor->addMinutes(30);
+
+                $isPast = $isToday && $cursor->lessThanOrEqualTo($now);
+
+                if (! $isPast && ! static::overlapsAny($cursor, $slotEnd, $booked)) {
                     $slots[] = $cursor->format('H:i');
                 }
 
@@ -166,5 +192,36 @@ class AppointmentOptions
         }
 
         return $slots;
+    }
+
+    /**
+     * Fetch the specialist's appointment intervals overlapping the given window.
+     *
+     * @return Collection<int, array{0: CarbonInterface, 1: CarbonInterface}>
+     */
+    protected static function bookedIntervals(User $specialist, CarbonImmutable $windowStart, CarbonImmutable $windowEnd): Collection
+    {
+        return Appointment::query()
+            ->where('specialist_id', $specialist->id)
+            ->where('start_at', '<', $windowEnd->utc())
+            ->where('end_at', '>', $windowStart->utc())
+            ->get(['start_at', 'end_at'])
+            ->map(fn (Appointment $appointment): array => [$appointment->start_at, $appointment->end_at]);
+    }
+
+    /**
+     * Determine whether a slot overlaps any of the booked intervals.
+     *
+     * @param  Collection<int, array{0: CarbonInterface, 1: CarbonInterface}>  $booked
+     */
+    protected static function overlapsAny(CarbonImmutable $slotStart, CarbonImmutable $slotEnd, Collection $booked): bool
+    {
+        foreach ($booked as [$bookedStart, $bookedEnd]) {
+            if ($slotStart->lessThan($bookedEnd) && $slotEnd->greaterThan($bookedStart)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

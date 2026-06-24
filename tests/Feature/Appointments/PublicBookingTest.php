@@ -3,6 +3,8 @@
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Notifications\Appointments\AppointmentBooked;
+use App\Support\Appointments\AppointmentOptions;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -35,6 +37,46 @@ test('the booking page exposes service pricing and specialist availability', fun
                 ->has('slots'),
             ),
         );
+});
+
+test('specialist availability excludes fully booked days and reflects only free slots', function () {
+    $setup = bookableSetup();
+
+    // Book the specialist's entire working window two days from now so that day
+    // has no free slot left at all.
+    $blockedDay = CarbonImmutable::now('UTC')->addDays(2)->startOfDay();
+
+    Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'start_at' => $blockedDay->setTime(9, 0),
+        'end_at' => $blockedDay->setTime(17, 0),
+    ]);
+
+    // Book a single early slot tomorrow; that day stays available but the taken
+    // time must not appear in the preview.
+    $partialDay = CarbonImmutable::now('UTC')->addDay()->startOfDay();
+
+    Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'start_at' => $partialDay->setTime(9, 0),
+        'end_at' => $partialDay->setTime(10, 0),
+    ]);
+
+    $specialist = collect(AppointmentOptions::specialists($setup['team']))
+        ->firstWhere('id', $setup['user']->id);
+
+    expect($specialist['available_days'])
+        ->not->toContain($blockedDay->format('Y-m-d'))
+        ->toContain($partialDay->format('Y-m-d'));
+
+    // The preview seeds from the first bookable day.
+    expect($specialist['next_available']['date'])->toBe($specialist['available_days'][0]);
 });
 
 test('a guest can book an appointment and a customer is created', function () {
