@@ -1,15 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
-import {
-    BookOpen,
-    Building2,
-    CalendarDays,
-    Folder,
-    LayoutGrid,
-    Menu,
-    Users,
-} from 'lucide-react';
+import { Building2, CalendarDays, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { TeamSwitcher } from '@/components/team-switcher';
 import { ThemeSwitcher } from '@/components/theme-switcher';
@@ -27,13 +18,6 @@ import {
     navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu';
 import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from '@/components/ui/sheet';
-import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
@@ -41,6 +25,7 @@ import {
 } from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useHideOnScroll } from '@/hooks/use-hide-on-scroll';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -74,6 +59,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth, currentTeam } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    const hidden = useHideOnScroll();
     const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
 
     const mainNavItems: NavItem[] = [
@@ -105,69 +91,13 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
     return (
         <>
-            <div className="border-b border-sidebar-border/80">
+            <div
+                className={cn(
+                    'fixed inset-x-0 top-0 z-40 border-b border-sidebar-border/80 bg-background transition-transform duration-300 lg:static lg:translate-y-0',
+                    hidden && '-translate-y-full',
+                )}
+            >
                 <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
-                    {/* Mobile Menu */}
-                    <div className="lg:hidden">
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="mr-2 h-[34px] w-[34px]"
-                                >
-                                    <Menu className="h-5 w-5" />
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent
-                                side="left"
-                                className="flex h-full w-64 flex-col items-stretch justify-between bg-sidebar"
-                            >
-                                <SheetTitle className="sr-only">
-                                    Navigation menu
-                                </SheetTitle>
-                                <SheetHeader className="flex justify-start text-left">
-                                    <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
-                                </SheetHeader>
-                                <div className="flex h-full flex-1 flex-col space-y-4 p-4">
-                                    <div className="flex h-full flex-col justify-between text-sm">
-                                        <div className="flex flex-col space-y-4">
-                                            {mainNavItems.map((item) => (
-                                                <Link
-                                                    key={item.title}
-                                                    href={item.href}
-                                                    className="flex items-center space-x-2 font-medium"
-                                                >
-                                                    {item.icon && (
-                                                        <item.icon className="h-5 w-5" />
-                                                    )}
-                                                    <span>{item.title}</span>
-                                                </Link>
-                                            ))}
-                                        </div>
-
-                                        <div className="flex flex-col space-y-4">
-                                            {rightNavItems.map((item) => (
-                                                <a
-                                                    key={item.title}
-                                                    href={toUrl(item.href)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex items-center space-x-2 font-medium"
-                                                >
-                                                    {item.icon && (
-                                                        <item.icon className="h-5 w-5" />
-                                                    )}
-                                                    <span>{item.title}</span>
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </SheetContent>
-                        </Sheet>
-                    </div>
-
                     <Link
                         href={dashboardUrl}
                         prefetch
@@ -268,6 +198,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
                 </div>
             </div>
+            {/* Spacer to offset the fixed top bar on mobile */}
+            <div className="h-16 lg:hidden" />
             {breadcrumbs.length > 1 && (
                 <div className="flex w-full border-b border-sidebar-border/70">
                     <div className="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">

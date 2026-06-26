@@ -1,3 +1,4 @@
+import { AppBottomNav } from '@/components/app-bottom-nav';
 import { AppContent } from '@/components/app-content';
 import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
@@ -10,7 +11,13 @@ export default function AppHeaderLayout({
     return (
         <AppShell variant="header">
             <AppHeader breadcrumbs={breadcrumbs} />
-            <AppContent variant="header">{children}</AppContent>
+            <AppContent
+                variant="header"
+                className="pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"
+            >
+                {children}
+            </AppContent>
+            <AppBottomNav />
         </AppShell>
     );
 }

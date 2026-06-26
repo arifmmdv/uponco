@@ -144,7 +144,23 @@
         @apply border-border;
     }
 
+    html,
+    body {
+        height: 100%;
+    }
+
     body {
         @apply bg-background text-foreground;
+    }
+
+    /* Inertia mounts the whole app here. Make it the single scroll container so
+       fixed bars stay put and the viewport doesn't shift when mobile browser
+       URL bars show/hide. `scrollbar-gutter: stable` reserves the scrollbar
+       space to avoid horizontal layout shift. */
+    #app {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        scrollbar-gutter: stable;
     }
 }

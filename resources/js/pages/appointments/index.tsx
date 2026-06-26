@@ -147,12 +147,8 @@ export default function AppointmentsIndex({
             <Head title="Appointments" />
 
             <div className="flex flex-col space-y-6 p-4">
-                <div className="flex items-center justify-between gap-3">
-                    <Heading
-                        variant="small"
-                        title="Appointments"
-                        description="Manage the appointments booked with your company"
-                    />
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <Heading variant="small" title="Appointments" />
 
                     <div className="flex items-center gap-2">
                         <Select
@@ -178,6 +174,7 @@ export default function AppointmentsIndex({
                         </Select>
 
                         <Button
+                            className="flex-1 lg:flex-none"
                             data-test="add-appointment-button"
                             disabled={!hasBookableResources}
                             onClick={openCreate}
