@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\InteractsWithAppointmentBooking;
 use App\Enums\OnboardingStep;
 use App\Enums\TeamRole;
+use App\Models\Appointment;
 use App\Models\Location;
 use App\Models\OnboardingProgress;
 use App\Models\Service;
@@ -11,6 +13,7 @@ use App\Models\ServiceCategory;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\WorkHour;
+use App\Support\Appointments\AppointmentOptions;
 use App\Support\LocationOptions;
 use App\Support\ServiceOptions;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +24,8 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    use InteractsWithAppointmentBooking;
+
     /**
      * Show the dashboard, including the onboarding wizard for owners and admins.
      */
@@ -28,10 +33,100 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         $team = $user->currentTeam;
+        $onboarding = $this->onboarding($user, $team);
+        $timezone = $team->timezone ?: config('app.timezone');
 
         return Inertia::render('dashboard', [
-            'onboarding' => $this->onboarding($user, $team),
+            'onboarding' => $onboarding,
+            'timezone' => $timezone,
+            'stats' => $onboarding === null ? $this->stats($team) : null,
+            'upcomingAppointments' => $onboarding === null
+                ? $this->upcomingAppointments($team, $timezone)
+                : null,
+            'formOptions' => $onboarding === null ? $this->formOptions($team) : null,
+            'availableSlots' => Inertia::optional(fn (): array => $this->availableSlots($request, $team)),
         ]);
+    }
+
+    /**
+     * Build the option data that powers the dashboard's quick-create drawers
+     * (appointment, customer, service and location) without leaving the page.
+     *
+     * @return array<string, mixed>
+     */
+    protected function formOptions(Team $team): array
+    {
+        $serviceOptions = $this->toOptions($team->services()->orderBy('title')->get(), 'title');
+        $locationOptions = $this->toOptions($team->locations()->orderBy('name')->get(), 'name');
+        $specialistOptions = $this->toOptions($team->members()->orderBy('name')->get(), 'name');
+
+        return [
+            'appointments' => [
+                'services' => AppointmentOptions::services($team),
+                'locations' => AppointmentOptions::locations($team),
+                'specialists' => AppointmentOptions::specialists($team),
+            ],
+            'services' => [
+                'categories' => $team->serviceCategories()->orderBy('name')->get()->map(fn (ServiceCategory $category): array => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                ]),
+                'locations' => $locationOptions,
+                'specialists' => $specialistOptions,
+                'priceTypes' => ServiceOptions::priceTypes(),
+                'serviceTypes' => ServiceOptions::serviceTypes(),
+                'deliveryTypes' => ServiceOptions::deliveryTypes(),
+                'meetingProviders' => ServiceOptions::meetingProviders(),
+            ],
+            'locations' => [
+                'services' => $serviceOptions,
+                'specialists' => $specialistOptions,
+                'countries' => LocationOptions::countries(),
+                'timezones' => LocationOptions::timezones(),
+            ],
+        ];
+    }
+
+    /**
+     * Build the headline metrics shown across the dashboard.
+     *
+     * @return array{customers: int, totalBookings: int, upcoming: int, services: int, locations: int}
+     */
+    protected function stats(Team $team): array
+    {
+        return [
+            'customers' => $team->customers()->count(),
+            'totalBookings' => $team->appointments()->count(),
+            'upcoming' => $team->appointments()->where('start_at', '>=', now())->count(),
+            'services' => $team->services()->count(),
+            'locations' => $team->locations()->count(),
+        ];
+    }
+
+    /**
+     * Fetch the next handful of upcoming appointments for the sidebar list.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function upcomingAppointments(Team $team, string $timezone): array
+    {
+        return $team->appointments()
+            ->with(['service:id,title', 'location:id,name', 'specialist:id,name', 'customer:id,name'])
+            ->where('start_at', '>=', now())
+            ->orderBy('start_at')
+            ->limit(6)
+            ->get()
+            ->map(fn (Appointment $appointment): array => [
+                'id' => $appointment->id,
+                'start_at' => $appointment->start_at->toIso8601String(),
+                'end_at' => $appointment->end_at->toIso8601String(),
+                'timezone' => $timezone,
+                'service' => ['title' => $appointment->service->title],
+                'location' => $appointment->location ? ['name' => $appointment->location->name] : null,
+                'specialist' => ['name' => $appointment->specialist->name],
+                'customer' => ['name' => $appointment->customer->name],
+            ])
+            ->all();
     }
 
     /**

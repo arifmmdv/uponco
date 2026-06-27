@@ -1,6 +1,7 @@
 export type * from './appointments';
 export type * from './auth';
 export type * from './customers';
+export type * from './dashboard';
 export type * from './locations';
 export type * from './navigation';
 export type * from './onboarding';
