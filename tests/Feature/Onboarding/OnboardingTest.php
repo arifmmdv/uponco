@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\BusinessCategory;
 use App\Enums\OnboardingStep;
 use App\Enums\OnboardingStepStatus;
 use App\Enums\TeamRole;
@@ -36,7 +35,7 @@ function onboardingStepRoute(Team $team, OnboardingStep $step): string
     ]);
 }
 
-test('owners see the onboarding wizard with all six steps', function () {
+test('owners see the onboarding wizard with all five steps', function () {
     [$user, $team] = onboardingOwner();
 
     $this
@@ -46,24 +45,35 @@ test('owners see the onboarding wizard with all six steps', function () {
         ->assertInertia(fn ($page) => $page
             ->component('dashboard')
             ->has('onboarding')
-            ->has('onboarding.steps', 6)
+            ->has('onboarding.steps', 5)
             ->where('onboarding.currentStep', 'general')
         );
 });
 
-test('the general step payload carries the team name and business category', function () {
-    [$user, $team] = onboardingOwner([
-        'name' => 'Acme Studio',
-        'business_category' => BusinessCategory::Hairdresser,
-    ]);
+test('the general section can be saved without leaving the dashboard', function () {
+    [$user, $team] = onboardingOwner();
 
     $this
         ->actingAs($user)
-        ->get(dashboardRoute($team))
-        ->assertInertia(fn ($page) => $page
-            ->where('onboarding.general.name', 'Acme Studio')
-            ->where('onboarding.general.businessCategory', 'hairdresser')
-        );
+        ->from(dashboardRoute($team))
+        ->patch(route('onboarding.general', ['current_team' => $team->slug]), [
+            'timezone' => 'America/New_York',
+        ])
+        ->assertRedirect(dashboardRoute($team))
+        ->assertSessionHasNoErrors();
+
+    expect($team->fresh()->timezone)->toBe('America/New_York');
+});
+
+test('the general section requires a valid timezone', function () {
+    [$user, $team] = onboardingOwner();
+
+    $this
+        ->actingAs($user)
+        ->patch(route('onboarding.general', ['current_team' => $team->slug]), [
+            'timezone' => 'Not/AZone',
+        ])
+        ->assertSessionHasErrors('timezone');
 });
 
 test('regular members do not see the onboarding wizard', function () {
@@ -96,30 +106,31 @@ test('mandatory steps auto-complete when their data already exists', function ()
         ->get(dashboardRoute($team))
         ->assertInertia(fn ($page) => $page
             ->where('onboarding.steps.0.status', 'completed')  // general
-            ->where('onboarding.steps.4.status', 'completed')  // profile
-            ->where('onboarding.steps.5.status', 'completed')  // work hours
+            ->where('onboarding.steps.1.status', 'pending')    // locations
+            ->where('onboarding.steps.3.status', 'completed')  // profile
+            ->where('onboarding.steps.4.status', 'completed')  // work hours
         );
 
     $progress = OnboardingProgress::firstWhere('user_id', $user->id);
     expect($progress->statusFor(OnboardingStep::General))->toBe(OnboardingStepStatus::Completed);
-    expect($progress->statusFor(OnboardingStep::Members))->toBe(OnboardingStepStatus::Pending);
+    expect($progress->statusFor(OnboardingStep::Locations))->toBe(OnboardingStepStatus::Pending);
 });
 
 test('an optional step can be skipped and advances the current step', function () {
-    // Timezone set so the General step auto-resolves, leaving Locations next.
+    // Timezone set so the General step auto-resolves, leaving Services next.
     [$user, $team] = onboardingOwner(['timezone' => 'UTC']);
 
     $this
         ->actingAs($user)
-        ->patch(onboardingStepRoute($team, OnboardingStep::Members), [
+        ->patch(onboardingStepRoute($team, OnboardingStep::Locations), [
             'status' => OnboardingStepStatus::Skipped->value,
         ])
         ->assertRedirect()
         ->assertSessionHasNoErrors();
 
     $progress = OnboardingProgress::firstWhere('user_id', $user->id);
-    expect($progress->statusFor(OnboardingStep::Members))->toBe(OnboardingStepStatus::Skipped);
-    expect($progress->current_step)->toBe(OnboardingStep::Locations);
+    expect($progress->statusFor(OnboardingStep::Locations))->toBe(OnboardingStepStatus::Skipped);
+    expect($progress->current_step)->toBe(OnboardingStep::Services);
 });
 
 test('a mandatory step cannot be skipped', function () {
@@ -138,7 +149,7 @@ test('an invalid status is rejected', function () {
 
     $this
         ->actingAs($user)
-        ->patch(onboardingStepRoute($team, OnboardingStep::Members), [
+        ->patch(onboardingStepRoute($team, OnboardingStep::Locations), [
             'status' => 'pending',
         ])
         ->assertSessionHasErrors('status');
@@ -162,7 +173,7 @@ test('regular members cannot update onboarding steps', function () {
 
     $this
         ->actingAs($member)
-        ->patch(onboardingStepRoute($team, OnboardingStep::Members), [
+        ->patch(onboardingStepRoute($team, OnboardingStep::Locations), [
             'status' => OnboardingStepStatus::Skipped->value,
         ])
         ->assertForbidden();
@@ -181,7 +192,6 @@ test('the wizard disappears once every step is resolved', function () {
     OnboardingProgress::create([
         'team_id' => $team->id,
         'user_id' => $user->id,
-        'members_status' => OnboardingStepStatus::Skipped,
         'locations_status' => OnboardingStepStatus::Skipped,
         'services_status' => OnboardingStepStatus::Skipped,
     ]);

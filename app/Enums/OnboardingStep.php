@@ -5,7 +5,6 @@ namespace App\Enums;
 enum OnboardingStep: string
 {
     case General = 'general';
-    case Members = 'members';
     case Locations = 'locations';
     case Services = 'services';
     case Profile = 'profile';
@@ -25,8 +24,7 @@ enum OnboardingStep: string
     public function label(): string
     {
         return match ($this) {
-            self::General => 'General',
-            self::Members => 'Team members',
+            self::General => 'General & team',
             self::Locations => 'Locations',
             self::Services => 'Services',
             self::Profile => 'Work profile',

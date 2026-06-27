@@ -2,12 +2,13 @@ import { router, usePage } from '@inertiajs/react';
 import { Check, Minus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import OnboardingController from '@/actions/App/Http/Controllers/OnboardingController';
+import Heading from '@/components/heading';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { Onboarding, OnboardingStepKey } from '@/types';
 import type { StepControls } from './controls';
 import StepGeneral from './step-general';
 import StepLocations from './step-locations';
-import StepMembers from './step-members';
 import StepProfile from './step-profile';
 import StepServices from './step-services';
 import StepWorkHours from './step-work-hours';
@@ -73,103 +74,112 @@ export default function OnboardingWizard({ onboarding }: Props) {
     };
 
     return (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-            <div className="space-y-2">
-                <h1 className="text-2xl font-semibold tracking-tight">
-                    Finish setting up your business
-                </h1>
-                <p className="text-muted-foreground">
-                    Complete these steps so you can start taking bookings.{' '}
-                    <span className="font-medium text-foreground">
-                        {completedCount} of {steps.length} done
-                    </span>
-                    .
-                </p>
-            </div>
+        <div className="px-4 py-6">
+            <Heading
+                title="Finish setting up your business"
+                description={`Complete these steps so you can start taking bookings — ${completedCount} of ${steps.length} done.`}
+            />
 
-            <ol className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                {steps.map((step, index) => {
-                    const isActive = step.key === activeStep;
-                    const isCompleted = step.status === 'completed';
-                    const isSkipped = step.status === 'skipped';
-                    const isClickable = step.status !== 'pending' || isActive;
+            <div className="flex flex-col lg:flex-row lg:space-x-12">
+                <aside className="w-full lg:w-64">
+                    <nav
+                        className="flex flex-col space-y-1"
+                        aria-label="Onboarding steps"
+                    >
+                        {steps.map((step, index) => {
+                            const isActive = step.key === activeStep;
+                            const isCompleted = step.status === 'completed';
+                            const isSkipped = step.status === 'skipped';
+                            const isClickable =
+                                step.status !== 'pending' || isActive;
 
-                    return (
-                        <li key={step.key} className="shrink-0">
-                            <button
-                                type="button"
-                                disabled={!isClickable}
-                                onClick={() => selectStep(step.key)}
-                                data-test={`onboarding-tab-${step.key}`}
-                                className={cn(
-                                    'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm whitespace-nowrap transition-colors',
-                                    isActive
-                                        ? 'border-primary bg-primary/5 text-foreground'
-                                        : 'border-border text-muted-foreground',
-                                    isClickable && !isActive
-                                        ? 'hover:bg-accent'
-                                        : '',
-                                    !isClickable ? 'opacity-60' : '',
-                                )}
-                            >
-                                <span
+                            return (
+                                <button
+                                    key={step.key}
+                                    type="button"
+                                    disabled={!isClickable}
+                                    onClick={() => selectStep(step.key)}
+                                    data-test={`onboarding-tab-${step.key}`}
                                     className={cn(
-                                        'flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium',
-                                        isCompleted
-                                            ? 'bg-primary text-primary-foreground'
-                                            : isSkipped
-                                              ? 'bg-muted text-muted-foreground'
-                                              : isActive
-                                                ? 'bg-primary/10 text-primary'
-                                                : 'bg-muted text-muted-foreground',
+                                        'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
+                                        isActive
+                                            ? 'bg-muted font-medium text-foreground'
+                                            : 'text-muted-foreground',
+                                        isClickable && !isActive
+                                            ? 'hover:bg-muted/60'
+                                            : '',
+                                        !isClickable ? 'opacity-60' : '',
                                     )}
                                 >
-                                    {isCompleted ? (
-                                        <Check className="h-3 w-3" />
-                                    ) : isSkipped ? (
-                                        <Minus className="h-3 w-3" />
-                                    ) : (
-                                        index + 1
-                                    )}
-                                </span>
-                                {step.label}
-                                {step.mandatory ? (
-                                    <span className="text-destructive">*</span>
-                                ) : null}
-                            </button>
-                        </li>
-                    );
-                })}
-            </ol>
+                                    <span
+                                        className={cn(
+                                            'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium',
+                                            isCompleted
+                                                ? 'bg-primary text-primary-foreground'
+                                                : isSkipped
+                                                  ? 'bg-muted-foreground/20 text-muted-foreground'
+                                                  : isActive
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'border border-border text-muted-foreground',
+                                        )}
+                                    >
+                                        {isCompleted ? (
+                                            <Check className="h-3.5 w-3.5" />
+                                        ) : isSkipped ? (
+                                            <Minus className="h-3.5 w-3.5" />
+                                        ) : (
+                                            index + 1
+                                        )}
+                                    </span>
+                                    <span className="flex-1">{step.label}</span>
+                                    {step.mandatory ? (
+                                        <span className="text-destructive">
+                                            *
+                                        </span>
+                                    ) : null}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </aside>
 
-            <div className="rounded-xl border p-5 sm:p-6">
-                {activeStep === 'general' ? (
-                    <StepGeneral data={onboarding.general} controls={controls} />
-                ) : null}
-                {activeStep === 'members' ? (
-                    <StepMembers data={onboarding.members} controls={controls} />
-                ) : null}
-                {activeStep === 'locations' ? (
-                    <StepLocations
-                        data={onboarding.locations}
-                        controls={controls}
-                    />
-                ) : null}
-                {activeStep === 'services' ? (
-                    <StepServices
-                        data={onboarding.services}
-                        controls={controls}
-                    />
-                ) : null}
-                {activeStep === 'profile' ? (
-                    <StepProfile data={onboarding.profile} controls={controls} />
-                ) : null}
-                {activeStep === 'work_hours' ? (
-                    <StepWorkHours
-                        data={onboarding.workHours}
-                        controls={controls}
-                    />
-                ) : null}
+                <Separator className="my-6 lg:hidden" />
+
+                <div className="flex-1 md:max-w-2xl">
+                    <section className="max-w-xl">
+                        {activeStep === 'general' ? (
+                            <StepGeneral
+                                data={onboarding.general}
+                                members={onboarding.members}
+                                controls={controls}
+                            />
+                        ) : null}
+                        {activeStep === 'locations' ? (
+                            <StepLocations
+                                data={onboarding.locations}
+                                controls={controls}
+                            />
+                        ) : null}
+                        {activeStep === 'services' ? (
+                            <StepServices
+                                data={onboarding.services}
+                                controls={controls}
+                            />
+                        ) : null}
+                        {activeStep === 'profile' ? (
+                            <StepProfile
+                                data={onboarding.profile}
+                                controls={controls}
+                            />
+                        ) : null}
+                        {activeStep === 'work_hours' ? (
+                            <StepWorkHours
+                                data={onboarding.workHours}
+                                controls={controls}
+                            />
+                        ) : null}
+                    </section>
+                </div>
             </div>
         </div>
     );

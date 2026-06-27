@@ -37,9 +37,7 @@ export type Onboarding = {
     currentStep: OnboardingStepKey;
     steps: OnboardingStepInfo[];
     general: {
-        name: string;
         timezone: string | null;
-        businessCategory: string | null;
         timezones: SelectOption[];
     };
     members: {

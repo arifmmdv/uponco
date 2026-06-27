@@ -72,9 +72,7 @@ class DashboardController extends Controller
                 'mandatory' => $step->isMandatory(),
             ])->all(),
             'general' => [
-                'name' => $team->name,
                 'timezone' => $team->timezone,
-                'businessCategory' => $team->business_category?->value,
                 'timezones' => LocationOptions::timezones(),
             ],
             'members' => [

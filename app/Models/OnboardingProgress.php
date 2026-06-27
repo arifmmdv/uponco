@@ -26,7 +26,6 @@ class OnboardingProgress extends Model
      */
     protected $attributes = [
         'general_status' => OnboardingStepStatus::Pending->value,
-        'members_status' => OnboardingStepStatus::Pending->value,
         'locations_status' => OnboardingStepStatus::Pending->value,
         'services_status' => OnboardingStepStatus::Pending->value,
         'profile_status' => OnboardingStepStatus::Pending->value,
@@ -43,7 +42,6 @@ class OnboardingProgress extends Model
         'team_id',
         'user_id',
         'general_status',
-        'members_status',
         'locations_status',
         'services_status',
         'profile_status',
@@ -156,7 +154,6 @@ class OnboardingProgress extends Model
     {
         return match ($step) {
             OnboardingStep::General => filled($team->timezone),
-            OnboardingStep::Members => $team->members()->count() > 1,
             OnboardingStep::Locations => $team->locations()->exists(),
             OnboardingStep::Services => $team->services()->exists(),
             OnboardingStep::Profile => filled($user->profile?->job_title),
@@ -175,7 +172,6 @@ class OnboardingProgress extends Model
             'current_step' => OnboardingStep::class,
             'completed_at' => 'datetime',
             'general_status' => OnboardingStepStatus::class,
-            'members_status' => OnboardingStepStatus::class,
             'locations_status' => OnboardingStepStatus::class,
             'services_status' => OnboardingStepStatus::class,
             'profile_status' => OnboardingStepStatus::class,
