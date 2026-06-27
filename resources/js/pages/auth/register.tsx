@@ -1,19 +1,25 @@
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Spinner } from '@/components/ui/spinner';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
+import type { SelectOption } from '@/types';
 
 type Props = {
     passwordRules: string;
+    businessCategories: SelectOption[];
 };
 
-export default function Register({ passwordRules }: Props) {
+export default function Register({ passwordRules, businessCategories }: Props) {
+    const [businessCategory, setBusinessCategory] = useState('');
+
     return (
         <>
             <Head title="Register" />
@@ -45,12 +51,51 @@ export default function Register({ passwordRules }: Props) {
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="company_name">
+                                    Company name
+                                </Label>
+                                <Input
+                                    id="company_name"
+                                    type="text"
+                                    required
+                                    tabIndex={2}
+                                    name="company_name"
+                                    placeholder="Company name"
+                                />
+                                <InputError message={errors.company_name} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <input
+                                    type="hidden"
+                                    name="business_category"
+                                    value={businessCategory}
+                                />
+                                <Label htmlFor="business_category">
+                                    Company area
+                                </Label>
+                                <SearchableSelect
+                                    id="business_category"
+                                    options={businessCategories}
+                                    value={businessCategory}
+                                    onChange={setBusinessCategory}
+                                    placeholder="Select a category"
+                                    searchPlaceholder="Search categories…"
+                                    emptyMessage="No categories found."
+                                    invalid={Boolean(errors.business_category)}
+                                />
+                                <InputError
+                                    message={errors.business_category}
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label htmlFor="email">Email address</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     required
-                                    tabIndex={2}
+                                    tabIndex={3}
                                     autoComplete="email"
                                     name="email"
                                     placeholder="email@example.com"
@@ -63,7 +108,7 @@ export default function Register({ passwordRules }: Props) {
                                 <PasswordInput
                                     id="password"
                                     required
-                                    tabIndex={3}
+                                    tabIndex={4}
                                     autoComplete="new-password"
                                     name="password"
                                     placeholder="Password"
@@ -79,7 +124,7 @@ export default function Register({ passwordRules }: Props) {
                                 <PasswordInput
                                     id="password_confirmation"
                                     required
-                                    tabIndex={4}
+                                    tabIndex={5}
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
@@ -93,7 +138,7 @@ export default function Register({ passwordRules }: Props) {
                             <Button
                                 type="submit"
                                 className="mt-2 w-full"
-                                tabIndex={5}
+                                tabIndex={6}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
@@ -103,7 +148,7 @@ export default function Register({ passwordRules }: Props) {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
+                            <TextLink href={login()} tabIndex={7}>
                                 Log in
                             </TextLink>
                         </div>

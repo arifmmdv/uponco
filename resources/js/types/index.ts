@@ -3,6 +3,7 @@ export type * from './auth';
 export type * from './customers';
 export type * from './locations';
 export type * from './navigation';
+export type * from './onboarding';
 export type * from './services';
 export type * from './teams';
 export type * from './ui';

@@ -12,6 +12,8 @@ use App\Http\Controllers\Company\ServiceController;
 use App\Http\Controllers\Company\WorkHoursController;
 use App\Http\Controllers\Company\WorkProfileController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PublicAppointmentController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -25,7 +27,9 @@ Route::post('appointments/{company}', [PublicAppointmentController::class, 'stor
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
-        Route::inertia('dashboard', 'dashboard')->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::patch('onboarding/steps/{step}', [OnboardingController::class, 'update'])->name('onboarding.steps.update');
 
         Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
         Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store');

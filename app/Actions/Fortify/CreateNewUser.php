@@ -5,9 +5,11 @@ namespace App\Actions\Fortify;
 use App\Actions\Teams\CreateTeam;
 use App\Concerns\AccountValidationRules;
 use App\Concerns\PasswordValidationRules;
+use App\Enums\BusinessCategory;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -29,6 +31,8 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->accountRules(),
             'password' => $this->passwordRules(),
+            'company_name' => ['required', 'string', 'max:255'],
+            'business_category' => ['required', 'string', Rule::in(BusinessCategory::values())],
         ])->validate();
 
         return DB::transaction(function () use ($input) {
@@ -38,7 +42,12 @@ class CreateNewUser implements CreatesNewUsers
                 'password' => $input['password'],
             ]);
 
-            $this->createTeam->handle($user, $user->name."'s Team", isPersonal: true);
+            $this->createTeam->handle(
+                $user,
+                $input['company_name'],
+                isPersonal: true,
+                businessCategory: BusinessCategory::from($input['business_category']),
+            );
 
             return $user;
         });

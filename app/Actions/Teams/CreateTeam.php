@@ -2,6 +2,7 @@
 
 namespace App\Actions\Teams;
 
+use App\Enums\BusinessCategory;
 use App\Enums\TeamRole;
 use App\Models\Team;
 use App\Models\User;
@@ -12,12 +13,13 @@ class CreateTeam
     /**
      * Create a new team and add the user as owner.
      */
-    public function handle(User $user, string $name, bool $isPersonal = false): Team
+    public function handle(User $user, string $name, bool $isPersonal = false, ?BusinessCategory $businessCategory = null): Team
     {
-        return DB::transaction(function () use ($user, $name, $isPersonal) {
+        return DB::transaction(function () use ($user, $name, $isPersonal, $businessCategory) {
             $team = Team::create([
                 'name' => $name,
                 'is_personal' => $isPersonal,
+                'business_category' => $businessCategory,
             ]);
 
             $membership = $team->memberships()->create([
