@@ -9,14 +9,15 @@ use App\Models\User;
 use App\Models\WorkHour;
 
 /**
- * Create a user that owns a fresh team with no setup data yet.
+ * Create a user that owns a fully set-up team (so it clears the onboarding
+ * gate) but has not yet completed the dashboard wizard steps.
  *
  * @return array{0: User, 1: Team}
  */
 function onboardingOwner(array $teamAttributes = []): array
 {
     $user = User::factory()->create();
-    $team = Team::factory()->create(array_merge(['timezone' => null], $teamAttributes));
+    $team = Team::factory()->create($teamAttributes);
     $team->members()->attach($user, ['role' => TeamRole::Owner->value]);
 
     return [$user, $team];
@@ -35,7 +36,7 @@ function onboardingStepRoute(Team $team, OnboardingStep $step): string
     ]);
 }
 
-test('owners see the onboarding wizard with all five steps', function () {
+test('owners see the onboarding wizard with all four steps', function () {
     [$user, $team] = onboardingOwner();
 
     $this
@@ -45,35 +46,9 @@ test('owners see the onboarding wizard with all five steps', function () {
         ->assertInertia(fn ($page) => $page
             ->component('dashboard')
             ->has('onboarding')
-            ->has('onboarding.steps', 5)
-            ->where('onboarding.currentStep', 'general')
+            ->has('onboarding.steps', 4)
+            ->where('onboarding.currentStep', 'locations')
         );
-});
-
-test('the general section can be saved without leaving the dashboard', function () {
-    [$user, $team] = onboardingOwner();
-
-    $this
-        ->actingAs($user)
-        ->from(dashboardRoute($team))
-        ->patch(route('onboarding.general', ['current_team' => $team->slug]), [
-            'timezone' => 'America/New_York',
-        ])
-        ->assertRedirect(dashboardRoute($team))
-        ->assertSessionHasNoErrors();
-
-    expect($team->fresh()->timezone)->toBe('America/New_York');
-});
-
-test('the general section requires a valid timezone', function () {
-    [$user, $team] = onboardingOwner();
-
-    $this
-        ->actingAs($user)
-        ->patch(route('onboarding.general', ['current_team' => $team->slug]), [
-            'timezone' => 'Not/AZone',
-        ])
-        ->assertSessionHasErrors('timezone');
 });
 
 test('regular members do not see the onboarding wizard', function () {
@@ -92,7 +67,7 @@ test('regular members do not see the onboarding wizard', function () {
 });
 
 test('mandatory steps auto-complete when their data already exists', function () {
-    [$user, $team] = onboardingOwner(['timezone' => 'UTC']);
+    [$user, $team] = onboardingOwner();
     $user->profile()->create(['name' => $user->name, 'job_title' => 'Stylist']);
     WorkHour::create([
         'user_id' => $user->id,
@@ -105,20 +80,19 @@ test('mandatory steps auto-complete when their data already exists', function ()
         ->actingAs($user)
         ->get(dashboardRoute($team))
         ->assertInertia(fn ($page) => $page
-            ->where('onboarding.steps.0.status', 'completed')  // general
-            ->where('onboarding.steps.1.status', 'pending')    // locations
-            ->where('onboarding.steps.3.status', 'completed')  // profile
-            ->where('onboarding.steps.4.status', 'completed')  // work hours
+            ->where('onboarding.steps.0.status', 'pending')    // locations
+            ->where('onboarding.steps.1.status', 'pending')    // services
+            ->where('onboarding.steps.2.status', 'completed')  // profile
+            ->where('onboarding.steps.3.status', 'completed')  // work hours
         );
 
     $progress = OnboardingProgress::firstWhere('user_id', $user->id);
-    expect($progress->statusFor(OnboardingStep::General))->toBe(OnboardingStepStatus::Completed);
+    expect($progress->statusFor(OnboardingStep::Profile))->toBe(OnboardingStepStatus::Completed);
     expect($progress->statusFor(OnboardingStep::Locations))->toBe(OnboardingStepStatus::Pending);
 });
 
 test('an optional step can be skipped and advances the current step', function () {
-    // Timezone set so the General step auto-resolves, leaving Services next.
-    [$user, $team] = onboardingOwner(['timezone' => 'UTC']);
+    [$user, $team] = onboardingOwner();
 
     $this
         ->actingAs($user)
@@ -138,7 +112,7 @@ test('a mandatory step cannot be skipped', function () {
 
     $this
         ->actingAs($user)
-        ->patch(onboardingStepRoute($team, OnboardingStep::General), [
+        ->patch(onboardingStepRoute($team, OnboardingStep::Profile), [
             'status' => OnboardingStepStatus::Skipped->value,
         ])
         ->assertSessionHasErrors('status');
@@ -160,7 +134,7 @@ test('completing a mandatory step requires the underlying data', function () {
 
     $this
         ->actingAs($user)
-        ->patch(onboardingStepRoute($team, OnboardingStep::General), [
+        ->patch(onboardingStepRoute($team, OnboardingStep::Profile), [
             'status' => OnboardingStepStatus::Completed->value,
         ])
         ->assertSessionHasErrors('status');
@@ -180,7 +154,7 @@ test('regular members cannot update onboarding steps', function () {
 });
 
 test('the wizard disappears once every step is resolved', function () {
-    [$user, $team] = onboardingOwner(['timezone' => 'UTC']);
+    [$user, $team] = onboardingOwner();
     $user->profile()->create(['name' => $user->name, 'job_title' => 'Stylist']);
     WorkHour::create([
         'user_id' => $user->id,

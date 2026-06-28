@@ -51,11 +51,11 @@ export default function UpcomingAppointments({
                         </Button>
                     </div>
                 ) : (
-                    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <ul className="divide-y">
                         {appointments.map((appointment) => (
                             <li
                                 key={appointment.id}
-                                className="flex items-start justify-between gap-3 rounded-lg border p-3"
+                                className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                             >
                                 <div className="min-w-0 space-y-0.5">
                                     <p className="truncate text-sm font-medium">

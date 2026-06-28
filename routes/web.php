@@ -13,10 +13,12 @@ use App\Http\Controllers\Company\WorkHoursController;
 use App\Http\Controllers\Company\WorkProfileController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OnboardController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PublicAppointmentController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
+use App\Http\Middleware\EnsureTeamOnboarded;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -27,9 +29,15 @@ Route::post('appointments/{company}', [PublicAppointmentController::class, 'stor
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
+        Route::get('onboard', [OnboardController::class, 'show'])->name('onboard.show');
+        Route::patch('onboard', [OnboardController::class, 'update'])->name('onboard.update');
+    });
+
+Route::prefix('{current_team}')
+    ->middleware(['auth', 'verified', EnsureTeamMembership::class, EnsureTeamOnboarded::class])
+    ->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::patch('onboarding/general', [OnboardingController::class, 'saveGeneral'])->name('onboarding.general');
         Route::patch('onboarding/steps/{step}', [OnboardingController::class, 'update'])->name('onboarding.steps.update');
 
         Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');

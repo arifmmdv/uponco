@@ -4,7 +4,6 @@ namespace App\Enums;
 
 enum OnboardingStep: string
 {
-    case General = 'general';
     case Locations = 'locations';
     case Services = 'services';
     case Profile = 'profile';
@@ -24,7 +23,6 @@ enum OnboardingStep: string
     public function label(): string
     {
         return match ($this) {
-            self::General => 'General & team',
             self::Locations => 'Locations',
             self::Services => 'Services',
             self::Profile => 'Work profile',
@@ -38,7 +36,7 @@ enum OnboardingStep: string
     public function isMandatory(): bool
     {
         return match ($this) {
-            self::General, self::Profile, self::WorkHours => true,
+            self::Profile, self::WorkHours => true,
             default => false,
         };
     }

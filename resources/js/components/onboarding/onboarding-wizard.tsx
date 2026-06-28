@@ -7,7 +7,6 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { Onboarding, OnboardingStepKey } from '@/types';
 import type { StepControls } from './controls';
-import StepGeneral from './step-general';
 import StepLocations from './step-locations';
 import StepProfile from './step-profile';
 import StepServices from './step-services';
@@ -39,6 +38,7 @@ export default function OnboardingWizard({ onboarding }: Props) {
 
     const goTo = (index: number): void => {
         const target = steps[index];
+
         if (target) {
             setActiveStep(target.key);
         }
@@ -68,6 +68,7 @@ export default function OnboardingWizard({ onboarding }: Props) {
 
     const selectStep = (key: OnboardingStepKey): void => {
         const target = steps.find((step) => step.key === key);
+
         if (target && (target.status !== 'pending' || key === activeStep)) {
             setActiveStep(key);
         }
@@ -147,13 +148,6 @@ export default function OnboardingWizard({ onboarding }: Props) {
 
                 <div className="flex-1 md:max-w-2xl">
                     <section className="max-w-xl">
-                        {activeStep === 'general' ? (
-                            <StepGeneral
-                                data={onboarding.general}
-                                members={onboarding.members}
-                                controls={controls}
-                            />
-                        ) : null}
                         {activeStep === 'locations' ? (
                             <StepLocations
                                 data={onboarding.locations}

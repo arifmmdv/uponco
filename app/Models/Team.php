@@ -29,15 +29,26 @@ class Team extends Model
 
         static::creating(function (Team $team) {
             if (empty($team->slug)) {
-                $team->slug = static::generateUniqueTeamSlug($team->name);
+                $team->slug = static::generateUniqueTeamSlug((string) $team->name);
             }
         });
 
         static::updating(function (Team $team) {
             if ($team->isDirty('name')) {
-                $team->slug = static::generateUniqueTeamSlug($team->name, $team->id);
+                $team->slug = static::generateUniqueTeamSlug((string) $team->name, $team->id);
             }
         });
+    }
+
+    /**
+     * Determine if the team still needs its core setup (name, timezone and
+     * business category) completed before it can be used.
+     */
+    public function needsOnboarding(): bool
+    {
+        return blank($this->name)
+            || blank($this->timezone)
+            || $this->business_category === null;
     }
 
     /**

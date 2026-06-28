@@ -74,7 +74,7 @@ test('the dashboard reports booking and customer stats when onboarding is hidden
 
 test('the dashboard omits stats while the onboarding wizard is shown', function () {
     $owner = User::factory()->create();
-    $team = Team::factory()->create(['timezone' => null]);
+    $team = Team::factory()->create();
     $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
 
     $this

@@ -28,14 +28,15 @@ test('team slug uses next available suffix', function () {
     Team::factory()->create(['name' => 'Acme One', 'slug' => 'acme-1']);
     Team::factory()->create(['name' => 'Acme Ten', 'slug' => 'acme-10']);
 
+    // Distinct name (team names are unique) that still slugifies to "acme".
     $this
         ->actingAs($user)
         ->post(route('teams.store'), [
-            'name' => 'Acme',
+            'name' => 'Acme!',
         ]);
 
     $this->assertDatabaseHas('teams', [
-        'name' => 'Acme',
+        'name' => 'Acme!',
         'slug' => 'acme-11',
     ]);
 });

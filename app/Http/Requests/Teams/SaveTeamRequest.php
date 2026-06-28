@@ -17,8 +17,10 @@ class SaveTeamRequest extends FormRequest
      */
     public function rules(): array
     {
+        $teamId = $this->user()?->currentTeam?->id;
+
         return [
-            'name' => ['required', 'string', 'max:255', new TeamName],
+            'name' => ['required', 'string', 'max:255', Rule::unique('teams', 'name')->ignore($teamId), new TeamName],
             'timezone' => ['nullable', 'string', Rule::in(timezone_identifiers_list())],
             'business_category' => ['nullable', 'string', Rule::in(BusinessCategory::values())],
         ];

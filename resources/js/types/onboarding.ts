@@ -1,16 +1,8 @@
 import type { Location, SelectOption } from './locations';
 import type { Service, ServiceCategory } from './services';
-import type {
-    RoleOption,
-    TeamInvitation,
-    TeamMember,
-    TeamPermissions,
-} from './teams';
 import type { WeeklySchedule } from './work-hours';
 
 export type OnboardingStepKey =
-    | 'general'
-    | 'members'
     | 'locations'
     | 'services'
     | 'profile'
@@ -36,16 +28,6 @@ export type OnboardingProfile = {
 export type Onboarding = {
     currentStep: OnboardingStepKey;
     steps: OnboardingStepInfo[];
-    general: {
-        timezone: string | null;
-        timezones: SelectOption[];
-    };
-    members: {
-        members: TeamMember[];
-        invitations: TeamInvitation[];
-        availableRoles: RoleOption[];
-        permissions: TeamPermissions;
-    };
     locations: {
         locations: Location[];
         services: SelectOption[];

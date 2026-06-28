@@ -166,29 +166,6 @@ class DashboardController extends Controller
                 'status' => $progress->statusFor($step)->value,
                 'mandatory' => $step->isMandatory(),
             ])->all(),
-            'general' => [
-                'timezone' => $team->timezone,
-                'timezones' => LocationOptions::timezones(),
-            ],
-            'members' => [
-                'members' => $team->members()->orderBy('name')->get()->map(fn (User $member): array => [
-                    'id' => $member->id,
-                    'name' => $member->name,
-                    'email' => $member->email,
-                    'avatar' => $member->avatar ?? null,
-                    'role' => $member->pivot->role->value,
-                    'role_label' => $member->pivot->role->label(),
-                ]),
-                'invitations' => $team->invitations()->whereNull('accepted_at')->get()->map(fn ($invitation): array => [
-                    'code' => $invitation->code,
-                    'email' => $invitation->email,
-                    'role' => $invitation->role->value,
-                    'role_label' => $invitation->role->label(),
-                    'created_at' => $invitation->created_at->toISOString(),
-                ]),
-                'availableRoles' => TeamRole::assignable(),
-                'permissions' => $user->toTeamPermissions($team),
-            ],
             'locations' => [
                 'locations' => $team->locations()
                     ->with(['services:id', 'specialists:id'])

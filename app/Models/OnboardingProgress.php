@@ -25,12 +25,11 @@ class OnboardingProgress extends Model
      * @var array<string, string>
      */
     protected $attributes = [
-        'general_status' => OnboardingStepStatus::Pending->value,
         'locations_status' => OnboardingStepStatus::Pending->value,
         'services_status' => OnboardingStepStatus::Pending->value,
         'profile_status' => OnboardingStepStatus::Pending->value,
         'work_hours_status' => OnboardingStepStatus::Pending->value,
-        'current_step' => OnboardingStep::General->value,
+        'current_step' => OnboardingStep::Locations->value,
     ];
 
     /**
@@ -41,7 +40,6 @@ class OnboardingProgress extends Model
     protected $fillable = [
         'team_id',
         'user_id',
-        'general_status',
         'locations_status',
         'services_status',
         'profile_status',
@@ -153,7 +151,6 @@ class OnboardingProgress extends Model
     public function hasDataForStep(OnboardingStep $step, Team $team, User $user): bool
     {
         return match ($step) {
-            OnboardingStep::General => filled($team->timezone),
             OnboardingStep::Locations => $team->locations()->exists(),
             OnboardingStep::Services => $team->services()->exists(),
             OnboardingStep::Profile => filled($user->profile?->job_title),
@@ -171,7 +168,6 @@ class OnboardingProgress extends Model
         return [
             'current_step' => OnboardingStep::class,
             'completed_at' => 'datetime',
-            'general_status' => OnboardingStepStatus::class,
             'locations_status' => OnboardingStepStatus::class,
             'services_status' => OnboardingStepStatus::class,
             'profile_status' => OnboardingStepStatus::class,

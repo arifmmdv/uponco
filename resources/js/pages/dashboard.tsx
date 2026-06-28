@@ -88,27 +88,42 @@ export default function Dashboard({
                     onAddAppointment={() => setOpenForm('appointment')}
                 />
 
-                <UpcomingAppointments
-                    appointments={upcoming}
-                    teamSlug={teamSlug}
-                    onAddAppointment={() => setOpenForm('appointment')}
-                />
+                {/*
+                    Mobile keeps a single column ordered by importance:
+                    upcoming → stats → quick actions → resources. On desktop the
+                    `order-*` is reset and items are placed onto a 3-column grid
+                    so stats lead a full row, quick actions and resources stack
+                    in the main column, and upcoming fills the right rail.
+                */}
+                <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:items-start">
+                    <div className="order-2 lg:order-none lg:col-span-3 lg:col-start-1 lg:row-start-1">
+                        <DashboardStats stats={safeStats} teamSlug={teamSlug} />
+                    </div>
 
-                <DashboardStats stats={safeStats} teamSlug={teamSlug} />
+                    <div className="order-3 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-2">
+                        <QuickActions
+                            onAddAppointment={() => setOpenForm('appointment')}
+                            onAddCustomer={() => setOpenForm('customer')}
+                            onAddService={() => setOpenForm('service')}
+                            onAddLocation={() => setOpenForm('location')}
+                        />
+                    </div>
 
-                <div className="grid gap-6 lg:grid-cols-2">
-                    <QuickActions
-                        onAddAppointment={() => setOpenForm('appointment')}
-                        onAddCustomer={() => setOpenForm('customer')}
-                        onAddService={() => setOpenForm('service')}
-                        onAddLocation={() => setOpenForm('location')}
-                    />
+                    <div className="order-4 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-3">
+                        <ResourceWidgets
+                            stats={safeStats}
+                            teamSlug={teamSlug}
+                            onAddLocation={() => setOpenForm('location')}
+                        />
+                    </div>
 
-                    <ResourceWidgets
-                        stats={safeStats}
-                        teamSlug={teamSlug}
-                        onAddLocation={() => setOpenForm('location')}
-                    />
+                    <div className="order-1 lg:order-none lg:col-start-3 lg:row-span-2 lg:row-start-2">
+                        <UpcomingAppointments
+                            appointments={upcoming}
+                            teamSlug={teamSlug}
+                            onAddAppointment={() => setOpenForm('appointment')}
+                        />
+                    </div>
                 </div>
             </div>
 

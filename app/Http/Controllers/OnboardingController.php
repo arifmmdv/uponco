@@ -14,29 +14,6 @@ use Illuminate\Validation\ValidationException;
 class OnboardingController extends Controller
 {
     /**
-     * Save the general section without navigating away from the dashboard.
-     *
-     * Mirrors the team timezone update but returns the user to the onboarding
-     * wizard rather than the business settings page.
-     */
-    public function saveGeneral(Request $request): RedirectResponse
-    {
-        $user = $request->user();
-        $team = $user->currentTeam;
-
-        $role = $user->teamRole($team);
-        abort_unless($role !== null && $role->isAtLeast(TeamRole::Admin), 403);
-
-        $validated = $request->validate([
-            'timezone' => ['required', 'string', Rule::in(timezone_identifiers_list())],
-        ]);
-
-        $team->update(['timezone' => $validated['timezone']]);
-
-        return back();
-    }
-
-    /**
      * Record the status of a single onboarding step for the current user.
      */
     public function update(Request $request, string $current_team, OnboardingStep $step): RedirectResponse
