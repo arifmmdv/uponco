@@ -52,13 +52,13 @@ const rightNavItems: NavItem[] = [
 ];
 
 const activeItemStyles =
-    'text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100';
+    'bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary dark:bg-primary/15 dark:text-primary';
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth, currentTeam } = page.props;
     const getInitials = useInitials();
-    const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
+    const { whenCurrentUrl } = useCurrentUrl();
     const hidden = useHideOnScroll();
     const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
 
@@ -93,7 +93,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
         <>
             <div
                 className={cn(
-                    'fixed inset-x-0 top-0 z-40 border-b border-sidebar-border/80 bg-background transition-transform duration-300 lg:static lg:translate-y-0',
+                    'fixed inset-x-0 top-0 z-40 bg-background transition-transform duration-300 lg:static lg:translate-y-0',
                     hidden && '-translate-y-full',
                 )}
             >
@@ -123,7 +123,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                                     item.href,
                                                     activeItemStyles,
                                                 ),
-                                                'h-9 cursor-pointer px-3',
+                                                'h-10 cursor-pointer rounded-full px-4',
                                             )}
                                         >
                                             {item.icon && (
@@ -131,9 +131,6 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                             )}
                                             {item.title}
                                         </Link>
-                                        {isCurrentUrl(item.href) && (
-                                            <div className="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-primary-gradient"></div>
-                                        )}
                                     </NavigationMenuItem>
                                 ))}
                             </NavigationMenuList>
@@ -201,7 +198,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
             {/* Spacer to offset the fixed top bar on mobile */}
             <div className="h-16 lg:hidden" />
             {breadcrumbs.length > 1 && (
-                <div className="flex w-full border-b border-sidebar-border/70">
+                <div className="flex w-full">
                     <div className="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">
                         <Breadcrumbs breadcrumbs={breadcrumbs} />
                     </div>

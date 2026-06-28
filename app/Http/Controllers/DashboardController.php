@@ -16,6 +16,7 @@ use App\Models\WorkHour;
 use App\Support\Appointments\AppointmentOptions;
 use App\Support\LocationOptions;
 use App\Support\ServiceOptions;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -40,6 +41,7 @@ class DashboardController extends Controller
             'onboarding' => $onboarding,
             'timezone' => $timezone,
             'stats' => $onboarding === null ? $this->stats($team) : null,
+            'weeklyTrend' => $onboarding === null ? $this->weeklyTrend($team, $timezone) : null,
             'upcomingAppointments' => $onboarding === null
                 ? $this->upcomingAppointments($team, $timezone)
                 : null,
@@ -101,6 +103,40 @@ class DashboardController extends Controller
             'services' => $team->services()->count(),
             'locations' => $team->locations()->count(),
         ];
+    }
+
+    /**
+     * Build a 7-day booking trend (today plus the next six days) for the chart.
+     *
+     * @return array<int, array{label: string, date: string, count: int, isToday: bool}>
+     */
+    protected function weeklyTrend(Team $team, string $timezone): array
+    {
+        $start = CarbonImmutable::now($timezone)->startOfDay();
+        $end = $start->addDays(7);
+        $today = $start->toDateString();
+
+        $counts = $team->appointments()
+            ->whereBetween('start_at', [$start->utc(), $end->utc()])
+            ->get(['start_at'])
+            ->groupBy(fn (Appointment $appointment): string => $appointment->start_at
+                ->setTimezone($timezone)
+                ->toDateString())
+            ->map->count();
+
+        return collect(range(0, 6))
+            ->map(function (int $offset) use ($start, $counts, $today): array {
+                $day = $start->addDays($offset);
+                $date = $day->toDateString();
+
+                return [
+                    'label' => $day->format('D'),
+                    'date' => $date,
+                    'count' => (int) $counts->get($date, 0),
+                    'isToday' => $date === $today,
+                ];
+            })
+            ->all();
     }
 
     /**

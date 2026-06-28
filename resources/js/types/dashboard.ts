@@ -14,6 +14,13 @@ export type DashboardStats = {
     locations: number;
 };
 
+export type DashboardTrendDay = {
+    label: string;
+    date: string;
+    count: number;
+    isToday: boolean;
+};
+
 export type UpcomingAppointment = {
     id: number;
     start_at: string;

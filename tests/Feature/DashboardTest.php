@@ -72,6 +72,44 @@ test('the dashboard reports booking and customer stats when onboarding is hidden
         );
 });
 
+test('the dashboard reports a seven day booking trend with today counted', function () {
+    [$member, $team] = dashboardMember();
+
+    Appointment::factory()->count(2)->create([
+        'team_id' => $team->id,
+        'start_at' => now()->addHours(2),
+        'end_at' => now()->addHours(3),
+    ]);
+    Appointment::factory()->create([
+        'team_id' => $team->id,
+        'start_at' => now()->addDays(2)->setTime(10, 0),
+        'end_at' => now()->addDays(2)->setTime(11, 0),
+    ]);
+
+    $this
+        ->actingAs($member)
+        ->get(route('dashboard', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('weeklyTrend', 7)
+            ->where('weeklyTrend.0.isToday', true)
+            ->where('weeklyTrend.0.count', 2)
+            ->where('weeklyTrend.2.count', 1)
+        );
+});
+
+test('the dashboard omits the booking trend while the onboarding wizard is shown', function () {
+    $owner = User::factory()->create();
+    $team = Team::factory()->create();
+    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
+
+    $this
+        ->actingAs($owner)
+        ->get(route('dashboard', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('weeklyTrend', null));
+});
+
 test('the dashboard omits stats while the onboarding wizard is shown', function () {
     $owner = User::factory()->create();
     $team = Team::factory()->create();

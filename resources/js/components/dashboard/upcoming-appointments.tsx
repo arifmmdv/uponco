@@ -19,7 +19,7 @@ export default function UpcomingAppointments({
     onAddAppointment,
 }: Props) {
     return (
-        <Card>
+        <Card className="h-full">
             <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-base font-medium">
@@ -36,8 +36,10 @@ export default function UpcomingAppointments({
                 </div>
 
                 {appointments.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-8 text-center">
-                        <CalendarClock className="mx-auto mb-2 size-6 text-muted-foreground" />
+                    <div className="rounded-xl border border-dashed p-8 text-center">
+                        <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-primary-gradient text-white shadow-sm">
+                            <CalendarClock className="size-5" />
+                        </div>
                         <p className="text-sm text-muted-foreground">
                             No upcoming appointments yet.
                         </p>
@@ -51,13 +53,14 @@ export default function UpcomingAppointments({
                         </Button>
                     </div>
                 ) : (
-                    <ul className="divide-y">
+                    <ul className="space-y-2">
                         {appointments.map((appointment) => (
                             <li
                                 key={appointment.id}
-                                className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                                className="group flex items-stretch gap-3 rounded-xl border p-3 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-sm"
                             >
-                                <div className="min-w-0 space-y-0.5">
+                                <span className="w-1 shrink-0 rounded-full bg-gradient-to-b from-[#0063ff] to-[#3884fe]" />
+                                <div className="min-w-0 flex-1 space-y-0.5">
                                     <p className="truncate text-sm font-medium">
                                         {appointment.service.title}
                                     </p>
@@ -69,7 +72,7 @@ export default function UpcomingAppointments({
                                     </p>
                                 </div>
                                 <div className="shrink-0 text-right">
-                                    <p className="text-xs font-medium">
+                                    <p className="text-xs font-semibold">
                                         {dayLabel(
                                             appointment.start_at,
                                             appointment.timezone,

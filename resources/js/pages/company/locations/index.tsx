@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Heading from '@/components/heading';
 import DeleteLocationModal from '@/components/locations/delete-location-modal';
 import LocationFormDrawer from '@/components/locations/location-form-drawer';
-import LocationsTable from '@/components/locations/locations-table';
+import LocationsGrid from '@/components/locations/locations-grid';
 import { Button } from '@/components/ui/button';
 import { index as companyIndex } from '@/routes/company';
 import { index as locationsIndex } from '@/routes/company/locations';
@@ -70,7 +70,7 @@ export default function LocationsIndex({
                     </Button>
                 </div>
 
-                <LocationsTable
+                <LocationsGrid
                     locations={locations}
                     countries={countries}
                     onEdit={openEdit}

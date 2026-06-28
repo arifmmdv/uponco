@@ -1,7 +1,10 @@
 import { Briefcase, CalendarPlus, MapPin, UserPlus } from 'lucide-react';
 import type { ComponentType } from 'react';
 
+import { ACCENTS  } from '@/components/dashboard/accents';
+import type {Accent} from '@/components/dashboard/accents';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type Props = {
     onAddAppointment: () => void;
@@ -30,21 +33,25 @@ export default function QuickActions({
                     <QuickAction
                         icon={CalendarPlus}
                         label="New appointment"
+                        accent="indigo"
                         onClick={onAddAppointment}
                     />
                     <QuickAction
                         icon={UserPlus}
                         label="Add customer"
+                        accent="emerald"
                         onClick={onAddCustomer}
                     />
                     <QuickAction
                         icon={Briefcase}
                         label="Add service"
+                        accent="sky"
                         onClick={onAddService}
                     />
                     <QuickAction
                         icon={MapPin}
                         label="Add location"
+                        accent="rose"
                         onClick={onAddLocation}
                     />
                 </div>
@@ -56,19 +63,31 @@ export default function QuickActions({
 function QuickAction({
     icon: Icon,
     label,
+    accent,
     onClick,
 }: {
     icon: ComponentType<{ className?: string }>;
     label: string;
+    accent: Accent;
     onClick: () => void;
 }) {
+    const styles = ACCENTS[accent];
+
     return (
         <button
             type="button"
             onClick={onClick}
-            className="flex items-center gap-3 rounded-lg border px-3 py-3 text-left text-sm font-medium transition-colors hover:border-primary/40 hover:bg-muted/50"
+            className={cn(
+                'group flex items-center gap-3 rounded-xl border px-3 py-3 text-left text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm',
+                styles.ring,
+            )}
         >
-            <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <span
+                className={cn(
+                    'flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm transition-transform duration-300 group-hover:scale-105',
+                    styles.gradient,
+                )}
+            >
                 <Icon className="size-4" />
             </span>
             {label}

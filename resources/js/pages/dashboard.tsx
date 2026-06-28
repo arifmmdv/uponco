@@ -1,13 +1,13 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { SlotRequest } from '@/components/appointments/appointment-form-drawer';
+import BookingsChart from '@/components/dashboard/bookings-chart';
 import DashboardHeader from '@/components/dashboard/dashboard-header';
 import DashboardStats from '@/components/dashboard/dashboard-stats';
 import QuickActions from '@/components/dashboard/quick-actions';
 import QuickCreateForms from '@/components/dashboard/quick-create-forms';
 import type { QuickCreateForm } from '@/components/dashboard/quick-create-forms';
-import ResourceWidgets from '@/components/dashboard/resource-widgets';
 import UpcomingAppointments from '@/components/dashboard/upcoming-appointments';
 import OnboardingWizard from '@/components/onboarding/onboarding-wizard';
 import { dashboard } from '@/routes';
@@ -15,6 +15,7 @@ import type {
     AppointmentSlot,
     DashboardFormOptions,
     DashboardStats as Stats,
+    DashboardTrendDay,
     Onboarding,
     UpcomingAppointment,
 } from '@/types';
@@ -23,6 +24,7 @@ type Props = {
     onboarding: Onboarding | null;
     timezone: string;
     stats: Stats | null;
+    weeklyTrend: DashboardTrendDay[] | null;
     upcomingAppointments: UpcomingAppointment[] | null;
     formOptions: DashboardFormOptions | null;
     availableSlots?: AppointmentSlot[];
@@ -40,6 +42,7 @@ export default function Dashboard({
     onboarding,
     timezone,
     stats,
+    weeklyTrend,
     upcomingAppointments,
     formOptions,
     availableSlots = [],
@@ -50,6 +53,13 @@ export default function Dashboard({
 
     const [openForm, setOpenForm] = useState<QuickCreateForm | null>(null);
     const [slotsLoading, setSlotsLoading] = useState(false);
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => setMounted(true));
+
+        return () => cancelAnimationFrame(frame);
+    }, []);
 
     const requestSlots = (request: SlotRequest) => {
         router.reload({
@@ -75,6 +85,7 @@ export default function Dashboard({
     }
 
     const safeStats = stats ?? EMPTY_STATS;
+    const trend = weeklyTrend ?? [];
     const upcoming = upcomingAppointments ?? [];
 
     return (
@@ -88,40 +99,37 @@ export default function Dashboard({
                     onAddAppointment={() => setOpenForm('appointment')}
                 />
 
+                <DashboardStats
+                    stats={safeStats}
+                    teamSlug={teamSlug}
+                    mounted={mounted}
+                />
+
                 {/*
-                    Mobile keeps a single column ordered by importance:
-                    upcoming → stats → quick actions → resources. On desktop the
-                    `order-*` is reset and items are placed onto a 3-column grid
-                    so stats lead a full row, quick actions and resources stack
-                    in the main column, and upcoming fills the right rail.
+                    Main column (chart + upcoming list) sits beside a right rail
+                    of quick actions on desktop. On mobile everything stacks; the
+                    quick actions are pulled up first so the shortcuts stay close
+                    to the top of the screen.
                 */}
                 <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:items-start">
-                    <div className="order-2 lg:order-none lg:col-span-3 lg:col-start-1 lg:row-start-1">
-                        <DashboardStats stats={safeStats} teamSlug={teamSlug} />
+                    <div className="order-1 flex flex-col gap-6 lg:order-none lg:col-span-2">
+                        {trend.length > 0 && (
+                            <BookingsChart trend={trend} mounted={mounted} />
+                        )}
+
+                        <UpcomingAppointments
+                            appointments={upcoming}
+                            teamSlug={teamSlug}
+                            onAddAppointment={() => setOpenForm('appointment')}
+                        />
                     </div>
 
-                    <div className="order-3 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-2">
+                    <div className="order-first lg:order-none lg:col-span-1">
                         <QuickActions
                             onAddAppointment={() => setOpenForm('appointment')}
                             onAddCustomer={() => setOpenForm('customer')}
                             onAddService={() => setOpenForm('service')}
                             onAddLocation={() => setOpenForm('location')}
-                        />
-                    </div>
-
-                    <div className="order-4 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-3">
-                        <ResourceWidgets
-                            stats={safeStats}
-                            teamSlug={teamSlug}
-                            onAddLocation={() => setOpenForm('location')}
-                        />
-                    </div>
-
-                    <div className="order-1 lg:order-none lg:col-start-3 lg:row-span-2 lg:row-start-2">
-                        <UpcomingAppointments
-                            appointments={upcoming}
-                            teamSlug={teamSlug}
-                            onAddAppointment={() => setOpenForm('appointment')}
                         />
                     </div>
                 </div>

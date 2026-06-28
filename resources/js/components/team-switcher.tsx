@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { Check, ChevronsUpDown, Plus, Users } from 'lucide-react';
+import { Check, ChevronDown, Plus, Users } from 'lucide-react';
 import CreateTeamModal from '@/components/create-team-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -87,7 +87,7 @@ export function TeamSwitcher({ inHeader = false }: TeamSwitcherProps) {
                             {currentTeam?.name ?? 'Select team'}
                         </span>
                     </div>
-                    <ChevronsUpDown
+                    <ChevronDown
                         className={
                             inHeader
                                 ? 'size-4 opacity-50'

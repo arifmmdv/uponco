@@ -18,7 +18,10 @@ export default function DashboardHeader({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-0.5">
                 <h2 className="text-xl font-semibold tracking-tight">
-                    Welcome back, {firstName}
+                    Welcome back,{' '}
+                    <span className="bg-gradient-to-r from-[#0063ff] to-[#3884fe] bg-clip-text text-transparent">
+                        {firstName}
+                    </span>
                 </h2>
                 <p className="text-sm text-muted-foreground">
                     Here's what's happening with your bookings today.
