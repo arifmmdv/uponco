@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { store, update } from '@/routes/company/services';
 import type {
     DeliveryType,
@@ -26,6 +27,52 @@ import type {
     ServiceCategory,
     ServiceTypeValue,
 } from '@/types';
+
+/**
+ * A horizontal, single-select radio group rendered as a segmented control.
+ */
+function OptionToggleGroup({
+    id,
+    options,
+    value,
+    onChange,
+    invalid,
+    ...props
+}: {
+    id?: string;
+    options: SelectOption[];
+    value: string;
+    onChange: (value: string) => void;
+    invalid?: boolean;
+    'data-test'?: string;
+}) {
+    return (
+        <ToggleGroup
+            type="single"
+            id={id}
+            value={value}
+            onValueChange={(next) => {
+                if (next) {
+                    onChange(next);
+                }
+            }}
+            variant="outline"
+            aria-invalid={invalid}
+            className="w-full"
+            {...props}
+        >
+            {options.map((option) => (
+                <ToggleGroupItem
+                    key={option.value}
+                    value={option.value}
+                    className="h-9 flex-1 px-3"
+                >
+                    {option.label}
+                </ToggleGroupItem>
+            ))}
+        </ToggleGroup>
+    );
+}
 
 type Props = {
     open: boolean;
@@ -261,14 +308,13 @@ function ServiceFormFields({
 
                         <div className="grid gap-2">
                             <Label htmlFor="price_type">Price type</Label>
-                            <SearchableSelect
+                            <OptionToggleGroup
                                 id="price_type"
                                 options={priceTypes}
                                 value={priceType}
                                 onChange={(value) =>
                                     setPriceType(value as PriceType)
                                 }
-                                placeholder="Select a price type"
                                 invalid={Boolean(errors.price_type)}
                                 data-test="service-price-type-select"
                             />
@@ -353,14 +399,13 @@ function ServiceFormFields({
 
                         <div className="grid gap-2">
                             <Label htmlFor="service_type">Service type</Label>
-                            <SearchableSelect
+                            <OptionToggleGroup
                                 id="service_type"
                                 options={serviceTypes}
                                 value={serviceType}
                                 onChange={(value) =>
                                     setServiceType(value as ServiceTypeValue)
                                 }
-                                placeholder="Select a service type"
                                 invalid={Boolean(errors.service_type)}
                                 data-test="service-type-select"
                             />
@@ -384,14 +429,19 @@ function ServiceFormFields({
 
                         <div className="grid gap-2">
                             <Label htmlFor="delivery_type">Delivery type</Label>
-                            <SearchableSelect
+                            <OptionToggleGroup
                                 id="delivery_type"
                                 options={deliveryTypes}
                                 value={deliveryType}
-                                onChange={(value) =>
-                                    setDeliveryType(value as DeliveryType)
-                                }
-                                placeholder="Select a delivery type"
+                                onChange={(value) => {
+                                    const next = value as DeliveryType;
+                                    setDeliveryType(next);
+
+                                    // Online services are not tied to a branch.
+                                    if (next === 'online') {
+                                        setLocationIds([]);
+                                    }
+                                }}
                                 invalid={Boolean(errors.delivery_type)}
                                 data-test="service-delivery-type-select"
                             />
@@ -432,24 +482,26 @@ function ServiceFormFields({
                             <InputError message={errors.description} />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="location_ids">Locations</Label>
-                            <MultiSelect
-                                id="location_ids"
-                                options={locations}
-                                value={locationIds}
-                                onChange={setLocationIds}
-                                placeholder="Select locations"
-                                searchPlaceholder="Search locations…"
-                                emptyMessage="No locations found."
-                                invalid={Boolean(errors.location_ids)}
-                                data-test="service-locations-select"
-                            />
-                            <p className="text-sm text-muted-foreground">
-                                Branches where this service is offered.
-                            </p>
-                            <InputError message={errors.location_ids} />
-                        </div>
+                        {deliveryType !== 'online' && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="location_ids">Locations</Label>
+                                <MultiSelect
+                                    id="location_ids"
+                                    options={locations}
+                                    value={locationIds}
+                                    onChange={setLocationIds}
+                                    placeholder="Select locations"
+                                    searchPlaceholder="Search locations…"
+                                    emptyMessage="No locations found."
+                                    invalid={Boolean(errors.location_ids)}
+                                    data-test="service-locations-select"
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                    Branches where this service is offered.
+                                </p>
+                                <InputError message={errors.location_ids} />
+                            </div>
+                        )}
 
                         <div className="grid gap-2">
                             <Label htmlFor="user_ids">Specialists</Label>
