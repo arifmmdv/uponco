@@ -1,10 +1,37 @@
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { useState } from 'react';
+
 import InputError from '@/components/input-error';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Label } from '@/components/ui/label';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
-import { todayDateInputValue } from '@/lib/appointments';
 import { cn } from '@/lib/utils';
 import type { AppointmentSlot } from '@/types';
+
+/** Parse a `YYYY-MM-DD` string into a local `Date`, avoiding UTC shifts. */
+function parseDateInputValue(value: string): Date | undefined {
+    if (!value) {
+        return undefined;
+    }
+
+    const [year, month, day] = value.split('-').map(Number);
+
+    return new Date(year, month - 1, day);
+}
+
+/** Today at local midnight, used to disable past days. */
+function startOfToday(): Date {
+    const now = new Date();
+
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
 
 type Props = {
     date: string;
@@ -28,18 +55,49 @@ export default function AppointmentSlotPicker({
     selectionIncomplete,
     error,
 }: Props) {
+    const [open, setOpen] = useState(false);
+    const selectedDate = parseDateInputValue(date);
+
     return (
         <div className="grid gap-2">
             <Label htmlFor="appointment-date">Date</Label>
-            <Input
-                id="appointment-date"
-                type="date"
-                value={date}
-                min={todayDateInputValue()}
-                disabled={selectionIncomplete}
-                onChange={(event) => onDateChange(event.target.value)}
-                data-test="appointment-date-input"
-            />
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                    <Button
+                        id="appointment-date"
+                        type="button"
+                        variant="outline"
+                        disabled={selectionIncomplete}
+                        aria-invalid={Boolean(error)}
+                        data-test="appointment-date-input"
+                        className={cn(
+                            'h-11 w-full justify-start rounded-xl px-4 font-normal',
+                            !selectedDate && 'text-muted-foreground',
+                        )}
+                    >
+                        <CalendarIcon className="size-4 opacity-50" />
+                        {selectedDate
+                            ? format(selectedDate, 'EEE, d MMM yyyy')
+                            : 'Pick a date'}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        defaultMonth={selectedDate}
+                        disabled={{ before: startOfToday() }}
+                        autoFocus
+                        onSelect={(next) => {
+                            if (next) {
+                                onDateChange(format(next, 'yyyy-MM-dd'));
+                            }
+
+                            setOpen(false);
+                        }}
+                    />
+                </PopoverContent>
+            </Popover>
 
             <div className="mt-1">
                 {selectionIncomplete ? (
