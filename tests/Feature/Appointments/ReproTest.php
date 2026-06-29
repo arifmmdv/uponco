@@ -18,7 +18,7 @@ test('REPRO double POST same slot', function () {
         'duration' => 60, 'technical_break' => 0, 'delivery_type' => 'onsite',
         'online_meeting_provider' => null, 'is_active' => true,
     ]);
-    $location = Location::factory()->for($team)->create(['timezone' => 'America/New_York']);
+    $location = Location::factory()->for($team)->create();
     $service->locations()->attach($location);
     $service->specialists()->attach($user);
     $location->specialists()->attach($user);

@@ -44,7 +44,6 @@ class LocationController extends Controller
                     'label' => $member->name,
                 ]),
             'countries' => LocationOptions::countries(),
-            'timezones' => LocationOptions::timezones(),
         ]);
     }
 
@@ -121,7 +120,6 @@ class LocationController extends Controller
             'street_address' => $location->street_address,
             'unit' => $location->unit,
             'postal_code' => $location->postal_code,
-            'timezone' => $location->timezone,
             'phone' => $location->phone,
             'service_ids' => $location->services->pluck('id')->all(),
             'user_ids' => $location->specialists->pluck('id')->all(),

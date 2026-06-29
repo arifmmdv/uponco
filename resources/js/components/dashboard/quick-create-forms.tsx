@@ -82,7 +82,6 @@ export default function QuickCreateForms({
                 services={options.locations.services}
                 specialists={options.locations.specialists}
                 countries={options.locations.countries}
-                timezones={options.locations.timezones}
             />
         </>
     );

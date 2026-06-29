@@ -16,7 +16,6 @@ type Props = {
     services: SelectOption[];
     specialists: SelectOption[];
     countries: SelectOption[];
-    timezones: SelectOption[];
 };
 
 export default function LocationsIndex({
@@ -24,7 +23,6 @@ export default function LocationsIndex({
     services,
     specialists,
     countries,
-    timezones,
 }: Props) {
     const { currentTeam } = usePage().props;
     const teamSlug = currentTeam?.slug ?? '';
@@ -86,7 +84,6 @@ export default function LocationsIndex({
                 services={services}
                 specialists={specialists}
                 countries={countries}
-                timezones={timezones}
             />
 
             <DeleteLocationModal

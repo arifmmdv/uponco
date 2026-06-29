@@ -32,7 +32,7 @@ function bookableSetup(array $serviceOverrides = []): array
         'is_active' => true,
     ], $serviceOverrides));
 
-    $location = Location::factory()->for($team)->create(['timezone' => 'UTC']);
+    $location = Location::factory()->for($team)->create();
 
     $service->locations()->attach($location);
     $service->specialists()->attach($user);

@@ -70,7 +70,6 @@ export default function StepLocations({ data, controls }: Props) {
                 services={data.services}
                 specialists={data.specialists}
                 countries={data.countries}
-                timezones={data.timezones}
             />
 
             <OnboardingFooter

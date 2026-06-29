@@ -28,7 +28,6 @@ class LocationFactory extends Factory
             'street_address' => fake()->streetAddress(),
             'unit' => fake()->optional()->secondaryAddress(),
             'postal_code' => fake()->postcode(),
-            'timezone' => fake()->timezone(),
             'phone' => fake()->optional()->phoneNumber(),
         ];
     }

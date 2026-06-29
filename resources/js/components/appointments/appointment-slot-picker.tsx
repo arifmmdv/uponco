@@ -61,7 +61,7 @@ export default function AppointmentSlotPicker({
     return (
         <div className="grid gap-2">
             <Label htmlFor="appointment-date">Date</Label>
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover open={open} onOpenChange={setOpen} modal>
                 <PopoverTrigger asChild>
                     <Button
                         id="appointment-date"

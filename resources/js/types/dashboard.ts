@@ -51,6 +51,5 @@ export type DashboardFormOptions = {
         services: SelectOption[];
         specialists: SelectOption[];
         countries: SelectOption[];
-        timezones: SelectOption[];
     };
 };

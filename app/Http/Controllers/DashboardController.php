@@ -84,7 +84,6 @@ class DashboardController extends Controller
                 'services' => $serviceOptions,
                 'specialists' => $specialistOptions,
                 'countries' => LocationOptions::countries(),
-                'timezones' => LocationOptions::timezones(),
             ],
         ];
     }
@@ -211,7 +210,6 @@ class DashboardController extends Controller
                 'services' => $this->toOptions($team->services()->orderBy('title')->get(), 'title'),
                 'specialists' => $this->toOptions($team->members()->orderBy('name')->get(), 'name'),
                 'countries' => LocationOptions::countries(),
-                'timezones' => LocationOptions::timezones(),
             ],
             'services' => [
                 'categories' => $team->serviceCategories()->orderBy('name')->get()->map(fn (ServiceCategory $category): array => [
@@ -273,7 +271,6 @@ class DashboardController extends Controller
             'street_address' => $location->street_address,
             'unit' => $location->unit,
             'postal_code' => $location->postal_code,
-            'timezone' => $location->timezone,
             'phone' => $location->phone,
             'service_ids' => $location->services->pluck('id')->all(),
             'user_ids' => $location->specialists->pluck('id')->all(),

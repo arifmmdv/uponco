@@ -33,7 +33,6 @@ export type Onboarding = {
         services: SelectOption[];
         specialists: SelectOption[];
         countries: SelectOption[];
-        timezones: SelectOption[];
     };
     services: {
         categories: ServiceCategory[];

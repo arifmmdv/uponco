@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'street_address',
     'unit',
     'postal_code',
-    'timezone',
     'phone',
 ])]
 class Location extends Model

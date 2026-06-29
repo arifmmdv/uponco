@@ -28,7 +28,6 @@ type Props = {
     services: SelectOption[];
     specialists: SelectOption[];
     countries: SelectOption[];
-    timezones: SelectOption[];
 };
 
 export default function LocationFormDrawer({
@@ -39,7 +38,6 @@ export default function LocationFormDrawer({
     services,
     specialists,
     countries,
-    timezones,
 }: Props) {
     const isEditing = location !== null;
 
@@ -67,7 +65,6 @@ export default function LocationFormDrawer({
                     services={services}
                     specialists={specialists}
                     countries={countries}
-                    timezones={timezones}
                     onSuccess={() => onOpenChange(false)}
                     onCancel={() => onOpenChange(false)}
                 />
@@ -82,7 +79,6 @@ type FieldsProps = {
     services: SelectOption[];
     specialists: SelectOption[];
     countries: SelectOption[];
-    timezones: SelectOption[];
     onSuccess: () => void;
     onCancel: () => void;
 };
@@ -93,7 +89,6 @@ function LocationFormFields({
     services,
     specialists,
     countries,
-    timezones,
     onSuccess,
     onCancel,
 }: FieldsProps) {
@@ -101,7 +96,6 @@ function LocationFormFields({
 
     const [isActive, setIsActive] = useState(location?.is_active ?? true);
     const [country, setCountry] = useState(location?.country ?? '');
-    const [timezone, setTimezone] = useState(location?.timezone ?? '');
     const [serviceIds, setServiceIds] = useState<string[]>(
         location?.service_ids.map((id) => id.toString()) ?? [],
     );
@@ -127,7 +121,6 @@ function LocationFormFields({
                         value={isActive ? '1' : '0'}
                     />
                     <input type="hidden" name="country" value={country} />
-                    <input type="hidden" name="timezone" value={timezone} />
                     {serviceIds.map((id) => (
                         <input
                             key={`service-${id}`}
@@ -235,22 +228,6 @@ function LocationFormFields({
                                 placeholder="94103"
                             />
                             <InputError message={errors.postal_code} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="timezone">Timezone</Label>
-                            <SearchableSelect
-                                id="timezone"
-                                options={timezones}
-                                value={timezone}
-                                onChange={setTimezone}
-                                placeholder="Select a timezone"
-                                searchPlaceholder="Search timezones…"
-                                emptyMessage="No timezones found."
-                                invalid={Boolean(errors.timezone)}
-                                data-test="location-timezone-select"
-                            />
-                            <InputError message={errors.timezone} />
                         </div>
 
                         <div className="grid gap-2">

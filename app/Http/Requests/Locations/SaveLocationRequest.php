@@ -34,7 +34,6 @@ class SaveLocationRequest extends FormRequest
             'street_address' => ['required', 'string', 'max:255'],
             'unit' => ['nullable', 'string', 'max:255'],
             'postal_code' => ['required', 'string', 'max:32'],
-            'timezone' => ['required', 'string', Rule::in(timezone_identifiers_list())],
             'phone' => ['nullable', 'string', 'max:32'],
             'service_ids' => ['array'],
             'service_ids.*' => [

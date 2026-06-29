@@ -17,7 +17,6 @@ function locationPayload(array $overrides = []): array
         'street_address' => '123 Market St',
         'unit' => 'Suite 400',
         'postal_code' => '94103',
-        'timezone' => 'America/New_York',
         'phone' => '+1 555 123 4567',
     ], $overrides);
 }
@@ -70,10 +69,9 @@ test('creating a location requires valid fields', function () {
         ->post(route('company.locations.store', ['current_team' => $team->slug]), locationPayload([
             'name' => '',
             'country' => 'ZZ',
-            'timezone' => 'Not/AZone',
         ]));
 
-    $response->assertSessionHasErrors(['name', 'country', 'timezone']);
+    $response->assertSessionHasErrors(['name', 'country']);
 });
 
 test('a location can be updated', function () {
