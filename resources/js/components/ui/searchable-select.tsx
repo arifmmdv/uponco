@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { Input } from '@/components/ui/input';
 import {
@@ -43,6 +43,16 @@ export function SearchableSelect({
 }: SearchableSelectProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
+    const triggerRef = useRef<HTMLButtonElement>(null);
+
+    // When this select is used inside a Sheet/Dialog, portaling the popover to
+    // document.body puts the search input outside the dialog's focus trap, which
+    // steals focus back and makes typing impossible. Render the content inside
+    // the nearest dialog so it stays within the same focus scope.
+    const getContainer = () =>
+        triggerRef.current?.closest<HTMLElement>(
+            '[data-slot="sheet-content"], [data-slot="dialog-content"]',
+        ) ?? undefined;
 
     const selected = options.find((option) => option.value === value);
 
@@ -67,10 +77,10 @@ export function SearchableSelect({
                     setQuery('');
                 }
             }}
-            modal
         >
             <PopoverTrigger asChild>
                 <button
+                    ref={triggerRef}
                     type="button"
                     id={id}
                     disabled={disabled}
@@ -94,6 +104,7 @@ export function SearchableSelect({
             </PopoverTrigger>
             <PopoverContent
                 align="start"
+                container={getContainer()}
                 className="w-[var(--radix-popover-trigger-width)] p-0"
             >
                 <div className="flex items-center border-b px-2">

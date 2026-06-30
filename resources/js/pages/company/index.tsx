@@ -102,12 +102,12 @@ export default function CompanyIndex({
                 />
 
                 <div className="grid auto-rows-auto grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {/* Business — large feature tile */}
+                    {/* Business — portrait tile (left, 1/4) */}
                     <BentoCard
                         href={editBusiness(teamSlug)}
                         mounted={mounted}
                         delay={0}
-                        className="sm:col-span-2 lg:col-span-2 lg:row-span-2"
+                        className="lg:col-span-1 lg:row-span-2"
                         icon={Building2}
                         iconClassName="bg-primary-gradient text-white"
                         title="Business"
@@ -175,11 +175,75 @@ export default function CompanyIndex({
                         </div>
                     </BentoCard>
 
+                    {/* Services — portrait tile (left, 1/4) */}
+                    <BentoCard
+                        href={servicesIndex(teamSlug)}
+                        mounted={mounted}
+                        delay={60}
+                        className="lg:col-span-1 lg:row-span-2"
+                        icon={Wrench}
+                        title="Services"
+                        description="Manage the services and categories your company offers."
+                    >
+                        <div className="mt-auto flex flex-col gap-4 pt-6">
+                            <div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-3xl font-bold tracking-tight tabular-nums">
+                                        {services.categories}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                        {services.categories === 1
+                                            ? 'category'
+                                            : 'categories'}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {services.count}{' '}
+                                    {services.count === 1 ? 'service' : 'services'}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                {services.items.map((service, index) => (
+                                    <div
+                                        key={service.title + index}
+                                        className="flex items-center gap-2.5 rounded-xl border bg-muted/30 px-3 py-2 transition-colors group-hover:border-primary/30"
+                                    >
+                                        <div
+                                            className={cn(
+                                                'flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white',
+                                                PRIMARY_GRADIENT,
+                                            )}
+                                        >
+                                            <Sparkles className="size-4" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-medium">
+                                                {service.title}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {service.duration} min
+                                                {formatPrice(service.price)
+                                                    ? ` · ${formatPrice(service.price)}`
+                                                    : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {services.count === 0 && (
+                                    <span className="text-sm text-muted-foreground">
+                                        No services yet — add your first one.
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </BentoCard>
+
                     {/* Work Profile — weekly availability */}
                     <BentoCard
                         href={editWorkProfile(teamSlug)}
                         mounted={mounted}
-                        delay={60}
+                        delay={120}
                         className="sm:col-span-2 lg:col-span-2"
                         icon={UserCog}
                         title="Work Profile"
@@ -254,7 +318,7 @@ export default function CompanyIndex({
                     <BentoCard
                         href={locationsIndex(teamSlug)}
                         mounted={mounted}
-                        delay={120}
+                        delay={180}
                         className="lg:col-span-1"
                         icon={MapPin}
                         title="Locations"
@@ -282,7 +346,7 @@ export default function CompanyIndex({
                     <BentoCard
                         href={brandIndex(teamSlug)}
                         mounted={mounted}
-                        delay={180}
+                        delay={240}
                         className="lg:col-span-1"
                         icon={Palette}
                         title="Brand"
@@ -303,69 +367,6 @@ export default function CompanyIndex({
                         </div>
                     </BentoCard>
 
-                    {/* Services — full-width footer tile */}
-                    <BentoCard
-                        href={servicesIndex(teamSlug)}
-                        mounted={mounted}
-                        delay={240}
-                        className="sm:col-span-2 lg:col-span-4"
-                        icon={Wrench}
-                        title="Services"
-                        description="Manage the services and categories your company offers."
-                    >
-                        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-                            <div className="shrink-0">
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-bold tracking-tight tabular-nums">
-                                        {services.categories}
-                                    </span>
-                                    <span className="text-sm text-muted-foreground">
-                                        {services.categories === 1
-                                            ? 'category'
-                                            : 'categories'}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    {services.count}{' '}
-                                    {services.count === 1 ? 'service' : 'services'}
-                                </p>
-                            </div>
-
-                            <div className="flex flex-1 flex-wrap gap-2">
-                                {services.items.map((service, index) => (
-                                    <div
-                                        key={service.title + index}
-                                        className="flex items-center gap-2.5 rounded-xl border bg-muted/30 px-3 py-2 transition-colors group-hover:border-primary/30"
-                                    >
-                                        <div
-                                            className={cn(
-                                                'flex size-8 items-center justify-center rounded-lg bg-gradient-to-br text-white',
-                                                PRIMARY_GRADIENT,
-                                            )}
-                                        >
-                                            <Sparkles className="size-4" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="truncate text-sm font-medium">
-                                                {service.title}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {service.duration} min
-                                                {formatPrice(service.price)
-                                                    ? ` · ${formatPrice(service.price)}`
-                                                    : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {services.count === 0 && (
-                                    <span className="text-sm text-muted-foreground">
-                                        No services yet — add your first one.
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </BentoCard>
                 </div>
             </div>
         </>
