@@ -89,7 +89,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
     return (
         <>
-            <div className="border-b border-sidebar-border/80 safe-area-inset-top">
+            <div className="border-b border-sidebar-border/80 safe-area-inset-top safe-area-inset-left safe-area-inset-right">
                 <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
                     <Link
                         href={dashboardUrl}
