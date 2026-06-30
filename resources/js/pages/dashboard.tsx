@@ -99,41 +99,44 @@ export default function Dashboard({
                     onAddAppointment={() => setOpenForm('appointment')}
                 />
 
-                <DashboardStats
-                    stats={safeStats}
-                    teamSlug={teamSlug}
-                    mounted={mounted}
-                />
-
                 {/*
-                    Main column (chart + upcoming list) sits beside a right rail
-                    of quick actions on desktop. On mobile everything stacks; the
-                    quick actions are pulled up first so the shortcuts stay close
-                    to the top of the screen.
+                    Desktop: a 2/3 left column (the week ahead + stats stacked)
+                    beside a 1/3 right rail holding the upcoming appointments,
+                    which spans both rows so it reads as a tall portrait card.
+                    Mobile: a single column reordered to Upcoming → Week ahead →
+                    Stats.
                 */}
-                <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:items-start">
-                    <div className="order-1 flex flex-col gap-6 lg:order-none lg:col-span-2">
-                        {trend.length > 0 && (
+                <div className="grid gap-6 lg:grid-cols-3">
+                    {trend.length > 0 && (
+                        <div className="order-2 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-1">
                             <BookingsChart trend={trend} mounted={mounted} />
-                        )}
+                        </div>
+                    )}
 
+                    <div className="order-3 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-2">
+                        <DashboardStats
+                            stats={safeStats}
+                            teamSlug={teamSlug}
+                            mounted={mounted}
+                        />
+                    </div>
+
+                    <div className="order-1 lg:order-none lg:col-start-3 lg:row-span-2 lg:row-start-1">
                         <UpcomingAppointments
                             appointments={upcoming}
                             teamSlug={teamSlug}
                             onAddAppointment={() => setOpenForm('appointment')}
                         />
                     </div>
-
-                    <div className="order-first lg:order-none lg:col-span-1">
-                        <QuickActions
-                            onAddAppointment={() => setOpenForm('appointment')}
-                            onAddCustomer={() => setOpenForm('customer')}
-                            onAddService={() => setOpenForm('service')}
-                            onAddLocation={() => setOpenForm('location')}
-                        />
-                    </div>
                 </div>
             </div>
+
+            <QuickActions
+                onAddAppointment={() => setOpenForm('appointment')}
+                onAddCustomer={() => setOpenForm('customer')}
+                onAddService={() => setOpenForm('service')}
+                onAddLocation={() => setOpenForm('location')}
+            />
 
             {formOptions && (
                 <QuickCreateForms

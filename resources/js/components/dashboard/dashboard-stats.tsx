@@ -1,9 +1,7 @@
-import { Briefcase, CalendarCheck, CalendarClock, MapPin, Users } from 'lucide-react';
+import { CalendarCheck, CalendarClock, Users } from 'lucide-react';
 
 import StatCard from '@/components/dashboard/stat-card';
 import { index as appointmentsIndex } from '@/routes/appointments';
-import { index as locationsIndex } from '@/routes/company/locations';
-import { index as servicesIndex } from '@/routes/company/services';
 import { index as customersIndex } from '@/routes/customers';
 import type { DashboardStats as Stats } from '@/types';
 
@@ -39,26 +37,10 @@ export default function DashboardStats({ stats, teamSlug, mounted }: Props) {
             accent: 'amber' as const,
             hint: 'Nothing upcoming',
         },
-        {
-            icon: Briefcase,
-            label: 'Services',
-            value: stats.services,
-            href: servicesIndex.url(teamSlug),
-            accent: 'sky' as const,
-            hint: 'Add a service',
-        },
-        {
-            icon: MapPin,
-            label: 'Locations',
-            value: stats.locations,
-            href: locationsIndex.url(teamSlug),
-            accent: 'rose' as const,
-            hint: 'Add a location',
-        },
     ];
 
     return (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
             {cards.map((card, index) => (
                 <StatCard
                     key={card.label}

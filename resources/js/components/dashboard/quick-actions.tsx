@@ -1,9 +1,16 @@
-import { Briefcase, CalendarPlus, MapPin, UserPlus } from 'lucide-react';
+import {
+    Briefcase,
+    CalendarPlus,
+    MapPin,
+    Plus,
+    UserPlus,
+    X,
+} from 'lucide-react';
 import type { ComponentType } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { ACCENTS  } from '@/components/dashboard/accents';
-import type {Accent} from '@/components/dashboard/accents';
-import { Card, CardContent } from '@/components/ui/card';
+import { ACCENTS } from '@/components/dashboard/accents';
+import type { Accent } from '@/components/dashboard/accents';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -19,44 +26,119 @@ export default function QuickActions({
     onAddService,
     onAddLocation,
 }: Props) {
-    return (
-        <Card>
-            <CardContent className="space-y-4">
-                <div className="space-y-0.5">
-                    <h3 className="text-base font-medium">Quick actions</h3>
-                    <p className="text-sm text-muted-foreground">
-                        Jump straight into the things you do most.
-                    </p>
-                </div>
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <QuickAction
-                        icon={CalendarPlus}
-                        label="New appointment"
-                        accent="indigo"
-                        onClick={onAddAppointment}
-                    />
-                    <QuickAction
-                        icon={UserPlus}
-                        label="Add customer"
-                        accent="emerald"
-                        onClick={onAddCustomer}
-                    />
-                    <QuickAction
-                        icon={Briefcase}
-                        label="Add service"
-                        accent="sky"
-                        onClick={onAddService}
-                    />
-                    <QuickAction
-                        icon={MapPin}
-                        label="Add location"
-                        accent="rose"
-                        onClick={onAddLocation}
-                    />
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const handlePointerDown = (event: PointerEvent) => {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target as Node)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [open]);
+
+    const actions: {
+        icon: ComponentType<{ className?: string }>;
+        label: string;
+        accent: Accent;
+        onClick: () => void;
+    }[] = [
+        {
+            icon: CalendarPlus,
+            label: 'New appointment',
+            accent: 'indigo',
+            onClick: onAddAppointment,
+        },
+        {
+            icon: UserPlus,
+            label: 'Add customer',
+            accent: 'emerald',
+            onClick: onAddCustomer,
+        },
+        {
+            icon: Briefcase,
+            label: 'Add service',
+            accent: 'sky',
+            onClick: onAddService,
+        },
+        {
+            icon: MapPin,
+            label: 'Add location',
+            accent: 'rose',
+            onClick: onAddLocation,
+        },
+    ];
+
+    const runAction = (onClick: () => void) => {
+        setOpen(false);
+        onClick();
+    };
+
+    return (
+        <div
+            ref={containerRef}
+            className="fixed right-[1rem] bottom-[calc(4rem+1rem)] z-50 flex flex-col items-end gap-3 lg:bottom-[1.5rem]"
+        >
+            {open && (
+                <div className="flex w-60 origin-bottom-right animate-in flex-col gap-1 rounded-2xl border bg-popover p-2 text-popover-foreground shadow-xl duration-200 fade-in zoom-in-95 slide-in-from-bottom-2">
+                    <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                        Quick actions
+                    </p>
+                    {actions.map((action) => (
+                        <QuickAction
+                            key={action.label}
+                            icon={action.icon}
+                            label={action.label}
+                            accent={action.accent}
+                            onClick={() => runAction(action.onClick)}
+                        />
+                    ))}
                 </div>
-            </CardContent>
-        </Card>
+            )}
+
+            <button
+                type="button"
+                onClick={() => setOpen((value) => !value)}
+                aria-expanded={open}
+                aria-label={open ? 'Close quick actions' : 'Open quick actions'}
+                data-test="quick-actions-fab"
+                className="flex size-14 items-center justify-center rounded-full bg-primary-gradient text-white shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95"
+            >
+                <span
+                    className={cn(
+                        'transition-transform duration-300',
+                        open && 'rotate-90',
+                    )}
+                >
+                    {open ? (
+                        <X className="size-6" />
+                    ) : (
+                        <Plus className="size-6" />
+                    )}
+                </span>
+            </button>
+        </div>
     );
 }
 
@@ -77,10 +159,7 @@ function QuickAction({
         <button
             type="button"
             onClick={onClick}
-            className={cn(
-                'group flex items-center gap-3 rounded-xl border px-3 py-3 text-left text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm',
-                styles.ring,
-            )}
+            className="group flex items-center gap-3 rounded-xl px-2 py-2 text-left text-sm font-medium transition-colors hover:bg-accent"
         >
             <span
                 className={cn(

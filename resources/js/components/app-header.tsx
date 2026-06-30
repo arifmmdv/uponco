@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { useHideOnScroll } from '@/hooks/use-hide-on-scroll';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -59,7 +58,6 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
     const { auth, currentTeam } = page.props;
     const getInitials = useInitials();
     const { whenCurrentUrl } = useCurrentUrl();
-    const hidden = useHideOnScroll();
     const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
 
     const mainNavItems: NavItem[] = [
@@ -91,12 +89,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
 
     return (
         <>
-            <div
-                className={cn(
-                    'fixed inset-x-0 top-0 z-40 bg-background transition-transform duration-300 lg:static lg:translate-y-0',
-                    hidden && '-translate-y-full',
-                )}
-            >
+            <div className="border-b border-sidebar-border/80">
                 <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
                     <Link
                         href={dashboardUrl}
@@ -195,10 +188,8 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
                 </div>
             </div>
-            {/* Spacer to offset the fixed top bar on mobile */}
-            <div className="h-16 lg:hidden" />
             {breadcrumbs.length > 1 && (
-                <div className="flex w-full">
+                <div className="flex w-full pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
                     <div className="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">
                         <Breadcrumbs breadcrumbs={breadcrumbs} />
                     </div>

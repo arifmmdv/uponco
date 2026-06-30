@@ -42,7 +42,7 @@ export function AppBottomNav() {
     ];
 
     return (
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-sidebar-border/80 bg-background pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-sidebar-border/80 bg-background lg:hidden">
             <div className="flex h-16 items-stretch justify-around">
                 {items.map((item) => {
                     const active =
