@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage, usePoll } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -61,6 +61,12 @@ export default function AppointmentsIndex({
 }: Props) {
     const { currentTeam } = usePage().props;
     const teamSlug = currentTeam?.slug ?? '';
+
+    // Keep the list fresh without a full reload: every 5s Inertia re-runs only
+    // the `appointments` prop on the server and merges it in, preserving local
+    // UI state (open drawer, active tab). Throttles automatically when the tab
+    // is in the background.
+    usePoll(5000, { only: ['appointments'] });
 
     const [tab, setTab] = useState<Tab>('upcoming');
     const [view, setView] = useState<View>('minimal');

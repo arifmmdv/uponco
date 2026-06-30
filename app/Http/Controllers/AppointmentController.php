@@ -32,9 +32,9 @@ class AppointmentController extends Controller
                 ->orderBy('start_at')
                 ->get()
                 ->map(fn (Appointment $appointment): array => $this->toAppointmentArray($appointment, $timezone)),
-            'services' => AppointmentOptions::services($team),
-            'locations' => AppointmentOptions::locations($team),
-            'specialists' => AppointmentOptions::specialists($team),
+            'services' => fn (): array => AppointmentOptions::services($team),
+            'locations' => fn (): array => AppointmentOptions::locations($team),
+            'specialists' => fn (): array => AppointmentOptions::specialists($team),
             'availableSlots' => Inertia::optional(fn (): array => $this->availableSlots($request, $team)),
         ]);
     }
