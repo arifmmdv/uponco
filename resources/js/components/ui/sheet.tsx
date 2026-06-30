@@ -58,20 +58,20 @@ function SheetContent({
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 overflow-hidden rounded-2xl border shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           side === "right" &&
-            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-2 right-2 h-auto w-3/4 max-w-[calc(100vw-1rem)] sm:max-w-sm",
+            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right top-[calc(0.5rem+env(safe-area-inset-top))] bottom-[calc(0.5rem+env(safe-area-inset-bottom))] right-[calc(0.5rem+env(safe-area-inset-right))] h-auto w-3/4 max-w-[calc(100vw-1rem)] sm:max-w-sm",
           side === "left" &&
-            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-2 left-2 h-auto w-3/4 max-w-[calc(100vw-1rem)] sm:max-w-sm",
+            "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left top-[calc(0.5rem+env(safe-area-inset-top))] bottom-[calc(0.5rem+env(safe-area-inset-bottom))] left-[calc(0.5rem+env(safe-area-inset-left))] h-auto w-3/4 max-w-[calc(100vw-1rem)] sm:max-w-sm",
           side === "top" &&
-            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-2 top-2 h-auto max-h-[calc(100vh-1rem)]",
+            "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top top-[calc(0.5rem+env(safe-area-inset-top))] right-[calc(0.5rem+env(safe-area-inset-right))] left-[calc(0.5rem+env(safe-area-inset-left))] h-auto max-h-[calc(100vh-1rem)]",
           side === "bottom" &&
-            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-2 bottom-2 h-auto max-h-[calc(100vh-1rem)]",
+            "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom bottom-[calc(0.5rem+env(safe-area-inset-bottom))] right-[calc(0.5rem+env(safe-area-inset-right))] left-[calc(0.5rem+env(safe-area-inset-left))] h-auto max-h-[calc(100vh-1rem)]",
           className
         )}
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-          <XIcon className="size-4" />
+        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring hover:bg-secondary absolute top-3 right-3 flex size-10 items-center justify-center rounded-lg opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+          <XIcon className="size-5" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>

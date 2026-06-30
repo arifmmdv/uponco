@@ -158,6 +158,7 @@
 
     body {
         @apply bg-background text-foreground;
+        overflow: hidden;
         overscroll-behavior-y: none;
     }
 
@@ -167,8 +168,9 @@
        space to avoid horizontal layout shift. */
     #app {
         width: 100%;
-        height: 100dsh;
+        height: 100dvh;
         overflow: auto;
+        overscroll-behavior-y: none;
         scrollbar-gutter: stable;
     }
 

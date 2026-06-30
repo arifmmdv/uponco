@@ -13,7 +13,7 @@ export default function AppHeaderLayout({
             <AppHeader breadcrumbs={breadcrumbs} />
             <AppContent
                 variant="header"
-                className="pb-[4rem] lg:pb-0"
+                className="pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"
             >
                 {children}
             </AppContent>

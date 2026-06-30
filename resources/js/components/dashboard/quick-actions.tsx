@@ -98,7 +98,7 @@ export default function QuickActions({
     return (
         <div
             ref={containerRef}
-            className="fixed right-[1rem] bottom-[calc(4rem+1rem)] z-50 flex flex-col items-end gap-3 lg:bottom-[1.5rem]"
+            className="fixed right-[1rem] bottom-[calc(4rem+1rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-end gap-3 lg:bottom-[1.5rem]"
         >
             {open && (
                 <div className="flex w-60 origin-bottom-right animate-in flex-col gap-1 rounded-2xl border bg-popover p-2 text-popover-foreground shadow-xl duration-200 fade-in zoom-in-95 slide-in-from-bottom-2">
