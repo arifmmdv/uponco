@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Search, Trash2 } from 'lucide-react';
 import { Fragment } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import type { Appointment } from '@/types';
 
 type Props = {
     appointments: Appointment[];
+    onView: (appointment: Appointment) => void;
     onEdit: (appointment: Appointment) => void;
     onDelete: (appointment: Appointment) => void;
     emptyMessage?: string;
@@ -31,6 +32,7 @@ type Props = {
 
 export default function AppointmentsTable({
     appointments,
+    onView,
     onEdit,
     onDelete,
     emptyMessage = 'No appointments yet. Book your first appointment to get started.',
@@ -93,6 +95,25 @@ export default function AppointmentsTable({
                                     <TableCell className="text-right">
                                         <TooltipProvider>
                                             <div className="flex items-center justify-end gap-1">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            data-test="appointment-view-button"
+                                                            onClick={() =>
+                                                                onView(
+                                                                    appointment,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Search className="size-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>View details</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <Button

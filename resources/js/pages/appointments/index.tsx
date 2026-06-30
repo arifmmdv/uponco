@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import AppointmentFormDrawer from '@/components/appointments/appointment-form-drawer';
 import type { SlotRequest } from '@/components/appointments/appointment-form-drawer';
+import AppointmentDetailsModal from '@/components/appointments/appointment-details-modal';
 import AppointmentsTable from '@/components/appointments/appointments-table';
 import type { CalendarView } from '@/components/appointments/calendar/appointment-calendar';
 import AppointmentCalendar from '@/components/appointments/calendar/appointment-calendar';
@@ -72,6 +73,9 @@ export default function AppointmentsIndex({
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState<Appointment | null>(null);
 
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [viewing, setViewing] = useState<Appointment | null>(null);
+
     // Appointments arrive ordered ascending by start. Upcoming keeps that order
     // (closest future first); past is reversed so it reads closest-to-now first.
     const { upcoming, past } = useMemo(() => {
@@ -126,6 +130,11 @@ export default function AppointmentsIndex({
     const confirmDelete = (appointment: Appointment) => {
         setDeleting(appointment);
         setDeleteOpen(true);
+    };
+
+    const openDetails = (appointment: Appointment) => {
+        setViewing(appointment);
+        setDetailsOpen(true);
     };
 
     const reschedule = (appointment: Appointment, startIso: string) => {
@@ -207,6 +216,7 @@ export default function AppointmentsIndex({
 
                         <AppointmentsTable
                             appointments={activeAppointments}
+                            onView={openDetails}
                             onEdit={openEdit}
                             onDelete={confirmDelete}
                             emptyMessage={
@@ -249,6 +259,12 @@ export default function AppointmentsIndex({
                 teamSlug={teamSlug}
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
+            />
+
+            <AppointmentDetailsModal
+                appointment={viewing}
+                open={detailsOpen}
+                onOpenChange={setDetailsOpen}
             />
         </>
     );

@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Search, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,11 +19,17 @@ import type { Customer } from '@/types';
 
 type Props = {
     customers: Customer[];
+    onView: (customer: Customer) => void;
     onEdit: (customer: Customer) => void;
     onDelete: (customer: Customer) => void;
 };
 
-export default function CustomersTable({ customers, onEdit, onDelete }: Props) {
+export default function CustomersTable({
+    customers,
+    onView,
+    onEdit,
+    onDelete,
+}: Props) {
     if (customers.length === 0) {
         return (
             <div className="rounded-lg border border-dashed p-10 text-center">
@@ -60,6 +66,23 @@ export default function CustomersTable({ customers, onEdit, onDelete }: Props) {
                             <TableCell className="text-right">
                                 <TooltipProvider>
                                     <div className="flex items-center justify-end gap-1">
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    data-test="customer-view-button"
+                                                    onClick={() =>
+                                                        onView(customer)
+                                                    }
+                                                >
+                                                    <Search className="size-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>View customer</p>
+                                            </TooltipContent>
+                                        </Tooltip>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Button

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import CustomerFormDialog from '@/components/customers/customer-form-dialog';
+import CustomerPreviewModal from '@/components/customers/customer-preview-modal';
 import CustomersTable from '@/components/customers/customers-table';
 import DeleteCustomerModal from '@/components/customers/delete-customer-modal';
 import Heading from '@/components/heading';
@@ -24,6 +25,9 @@ export default function CustomersIndex({ customers }: Props) {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState<Customer | null>(null);
 
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [viewing, setViewing] = useState<Customer | null>(null);
+
     const openCreate = () => {
         setEditing(null);
         setFormOpen(true);
@@ -37,6 +41,11 @@ export default function CustomersIndex({ customers }: Props) {
     const confirmDelete = (customer: Customer) => {
         setDeleting(customer);
         setDeleteOpen(true);
+    };
+
+    const openPreview = (customer: Customer) => {
+        setViewing(customer);
+        setPreviewOpen(true);
     };
 
     return (
@@ -61,6 +70,7 @@ export default function CustomersIndex({ customers }: Props) {
 
                 <CustomersTable
                     customers={customers}
+                    onView={openPreview}
                     onEdit={openEdit}
                     onDelete={confirmDelete}
                 />
@@ -78,6 +88,12 @@ export default function CustomersIndex({ customers }: Props) {
                 teamSlug={teamSlug}
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
+            />
+
+            <CustomerPreviewModal
+                customer={viewing}
+                open={previewOpen}
+                onOpenChange={setPreviewOpen}
             />
         </>
     );
