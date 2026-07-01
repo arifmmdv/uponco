@@ -24,7 +24,17 @@ type Props = {
 export default function StepDetails({ values, onChange, errors }: Props) {
     return (
         <div className="space-y-6">
-            <section className="space-y-4">
+            {/*
+             * Grouping the fields in a form (with authoritative autocomplete
+             * tokens) lets the browser and password managers offer native
+             * autofill and "save these details" prompts. Submission itself is
+             * driven from the footer via the booking hook, so the form's own
+             * submit is a no-op.
+             */}
+            <form
+                className="space-y-4"
+                onSubmit={(event) => event.preventDefault()}
+            >
                 <h2 className="text-sm font-medium">Your details</h2>
 
                 <div className="grid gap-2">
@@ -37,6 +47,8 @@ export default function StepDetails({ values, onChange, errors }: Props) {
                             onChange('customer_name', event.target.value)
                         }
                         placeholder="Jane Doe"
+                        autoComplete="name"
+                        autoCapitalize="words"
                         aria-invalid={Boolean(errors.customer_name)}
                         data-test="appointment-customer-name-input"
                     />
@@ -54,6 +66,10 @@ export default function StepDetails({ values, onChange, errors }: Props) {
                             onChange('customer_email', event.target.value)
                         }
                         placeholder="jane@example.com"
+                        autoComplete="email"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        inputMode="email"
                         aria-invalid={Boolean(errors.customer_email)}
                         data-test="appointment-customer-email-input"
                     />
@@ -84,11 +100,12 @@ export default function StepDetails({ values, onChange, errors }: Props) {
                         }
                         placeholder="Anything we should know before your visit…"
                         rows={4}
+                        autoComplete="off"
                         data-test="appointment-notes-input"
                     />
                     <InputError message={errors.notes} />
                 </div>
-            </section>
+            </form>
         </div>
     );
 }

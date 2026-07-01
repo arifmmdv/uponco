@@ -72,7 +72,7 @@ function InternationalPhoneInput({
             value={(value || undefined) as Value}
             onChange={(next?: Value) => onChange(next ?? '')}
             inputComponent={Input}
-            numberInputProps={{ className }}
+            numberInputProps={{ className, autoComplete: 'tel' }}
             className={cn(
                 'flex items-center gap-2',
                 '[&_.PhoneInputCountry]:m-0 [&_.PhoneInputCountry]:h-12 [&_.PhoneInputCountry]:gap-2 [&_.PhoneInputCountry]:rounded-md [&_.PhoneInputCountry]:border [&_.PhoneInputCountry]:border-input [&_.PhoneInputCountry]:bg-transparent [&_.PhoneInputCountry]:px-3 [&_.PhoneInputCountry]:transition-[color,box-shadow] focus-within:[&_.PhoneInputCountry]:border-ring focus-within:[&_.PhoneInputCountry]:ring-[3px] focus-within:[&_.PhoneInputCountry]:ring-ring/50',
