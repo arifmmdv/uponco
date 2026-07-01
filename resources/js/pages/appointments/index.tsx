@@ -2,24 +2,24 @@ import { Head, router, usePage, usePoll } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import AppointmentDetailsModal from '@/components/appointments/appointment-details-modal';
 import AppointmentFormDrawer from '@/components/appointments/appointment-form-drawer';
 import type { SlotRequest } from '@/components/appointments/appointment-form-drawer';
-import AppointmentDetailsModal from '@/components/appointments/appointment-details-modal';
 import AppointmentsTable from '@/components/appointments/appointments-table';
-import type { CalendarView } from '@/components/appointments/calendar/appointment-calendar';
+import AppointmentsToolbar, {
+    EMPTY_FILTERS,
+} from '@/components/appointments/appointments-toolbar';
+import type {
+    AppointmentFilters,
+    AppointmentTab,
+    AppointmentView,
+} from '@/components/appointments/appointments-toolbar';
 import AppointmentCalendar from '@/components/appointments/calendar/appointment-calendar';
 import DeleteAppointmentModal from '@/components/appointments/delete-appointment-modal';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { toDateInputValue } from '@/lib/appointments';
-import { cn } from '@/lib/utils';
 import {
     index as appointmentsIndex,
     reschedule as rescheduleRoute,
@@ -41,16 +41,6 @@ type Props = {
     availableSlots?: AppointmentSlot[];
 };
 
-type Tab = 'upcoming' | 'past';
-type View = 'minimal' | CalendarView;
-
-const VIEW_OPTIONS: { value: View; label: string }[] = [
-    { value: 'minimal', label: 'Minimal' },
-    { value: 'day', label: 'Day' },
-    { value: 'week', label: 'Week' },
-    { value: 'month', label: 'Month' },
-];
-
 export default function AppointmentsIndex({
     appointments,
     timezone,
@@ -68,8 +58,18 @@ export default function AppointmentsIndex({
     // is in the background.
     usePoll(5000, { only: ['appointments'] });
 
-    const [tab, setTab] = useState<Tab>('upcoming');
-    const [view, setView] = useState<View>('minimal');
+    const [tab, setTab] = useLocalStorage<AppointmentTab>(
+        'appointments:tab',
+        'upcoming',
+    );
+    const [view, setView] = useLocalStorage<AppointmentView>(
+        'appointments:view',
+        'minimal',
+    );
+    const [filters, setFilters] = useLocalStorage<AppointmentFilters>(
+        'appointments:filters:v2',
+        EMPTY_FILTERS,
+    );
     const [cursor, setCursor] = useState<Date>(() => new Date());
 
     const [formOpen, setFormOpen] = useState(false);
@@ -82,6 +82,37 @@ export default function AppointmentsIndex({
     const [detailsOpen, setDetailsOpen] = useState(false);
     const [viewing, setViewing] = useState<Appointment | null>(null);
 
+    // Apply the toolbar facet filters (location / service / specialist) before
+    // anything else so every view — minimal and calendar — sees the same set.
+    const filteredAppointments = useMemo(() => {
+        return appointments.filter((appointment) => {
+            if (
+                filters.locationIds.length > 0 &&
+                !filters.locationIds.includes(String(appointment.location_id))
+            ) {
+                return false;
+            }
+
+            if (
+                filters.serviceIds.length > 0 &&
+                !filters.serviceIds.includes(String(appointment.service_id))
+            ) {
+                return false;
+            }
+
+            if (
+                filters.specialistIds.length > 0 &&
+                !filters.specialistIds.includes(
+                    String(appointment.specialist_id),
+                )
+            ) {
+                return false;
+            }
+
+            return true;
+        });
+    }, [appointments, filters]);
+
     // Appointments arrive ordered ascending by start. Upcoming keeps that order
     // (closest future first); past is reversed so it reads closest-to-now first.
     const { upcoming, past } = useMemo(() => {
@@ -89,7 +120,7 @@ export default function AppointmentsIndex({
         const upcoming: Appointment[] = [];
         const past: Appointment[] = [];
 
-        for (const appointment of appointments) {
+        for (const appointment of filteredAppointments) {
             if (new Date(appointment.start_at).getTime() >= now) {
                 upcoming.push(appointment);
             } else {
@@ -98,7 +129,7 @@ export default function AppointmentsIndex({
         }
 
         return { upcoming, past: past.reverse() };
-    }, [appointments]);
+    }, [filteredAppointments]);
 
     const activeAppointments = tab === 'upcoming' ? upcoming : past;
 
@@ -162,83 +193,52 @@ export default function AppointmentsIndex({
             <Head title="Appointments" />
 
             <div className="flex flex-col space-y-6 p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <Heading variant="small" title="Appointments" />
 
-                    <div className="flex items-center gap-2">
-                        <Select
-                            value={view}
-                            onValueChange={(value) => setView(value as View)}
-                        >
-                            <SelectTrigger
-                                className="w-[120px]"
-                                data-test="appointment-view-select"
-                            >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {VIEW_OPTIONS.map((option) => (
-                                    <SelectItem
-                                        key={option.value}
-                                        value={option.value}
-                                    >
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <Button
-                            className="flex-1 lg:flex-none"
-                            data-test="add-appointment-button"
-                            disabled={!hasBookableResources}
-                            onClick={openCreate}
-                        >
-                            <Plus /> New appointment
-                        </Button>
-                    </div>
+                    <Button
+                        className="w-full sm:w-auto"
+                        data-test="add-appointment-button"
+                        disabled={!hasBookableResources}
+                        onClick={openCreate}
+                    >
+                        <Plus /> New appointment
+                    </Button>
                 </div>
 
-                {view === 'minimal' ? (
-                    <div className="space-y-4">
-                        <div className="flex border-b">
-                            <TabButton
-                                active={tab === 'upcoming'}
-                                onClick={() => setTab('upcoming')}
-                                count={upcoming.length}
-                                data-test="appointments-tab-upcoming"
-                            >
-                                Upcoming
-                            </TabButton>
-                            <TabButton
-                                active={tab === 'past'}
-                                onClick={() => setTab('past')}
-                                count={past.length}
-                                data-test="appointments-tab-past"
-                            >
-                                Past Appointments
-                            </TabButton>
-                        </div>
+                <AppointmentsToolbar
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    services={services}
+                    locations={locations}
+                    specialists={specialists}
+                    tab={tab}
+                    onTabChange={setTab}
+                    upcomingCount={upcoming.length}
+                    pastCount={past.length}
+                    view={view}
+                    onViewChange={setView}
+                />
 
-                        <AppointmentsTable
-                            appointments={activeAppointments}
-                            onView={openDetails}
-                            onEdit={openEdit}
-                            onDelete={confirmDelete}
-                            emptyMessage={
-                                tab === 'upcoming'
-                                    ? 'No upcoming appointments.'
-                                    : 'No past appointments.'
-                            }
-                        />
-                    </div>
+                {view === 'minimal' ? (
+                    <AppointmentsTable
+                        appointments={activeAppointments}
+                        onView={openDetails}
+                        onEdit={openEdit}
+                        onDelete={confirmDelete}
+                        emptyMessage={
+                            tab === 'upcoming'
+                                ? 'No upcoming appointments.'
+                                : 'No past appointments.'
+                        }
+                    />
                 ) : (
                     <AppointmentCalendar
                         view={view}
                         date={cursor}
                         onDateChange={setCursor}
                         onViewChange={setView}
-                        appointments={appointments}
+                        appointments={activeAppointments}
                         timezone={timezone}
                         onEditAppointment={openEdit}
                         onReschedule={reschedule}
@@ -273,49 +273,6 @@ export default function AppointmentsIndex({
                 onOpenChange={setDetailsOpen}
             />
         </>
-    );
-}
-
-type TabButtonProps = {
-    active: boolean;
-    onClick: () => void;
-    count: number;
-    children: React.ReactNode;
-    'data-test'?: string;
-};
-
-function TabButton({
-    active,
-    onClick,
-    count,
-    children,
-    ...props
-}: TabButtonProps) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={cn(
-                '-mb-px flex items-center gap-2 border-b-2 px-1 pb-3 text-sm font-medium transition-colors',
-                'mr-6',
-                active
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
-            {...props}
-        >
-            {children}
-            <span
-                className={cn(
-                    'rounded-full px-1.5 py-0.5 text-xs',
-                    active
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-muted text-muted-foreground',
-                )}
-            >
-                {count}
-            </span>
-        </button>
     );
 }
 
