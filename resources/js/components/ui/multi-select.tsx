@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Search, X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { Input } from '@/components/ui/input';
 import {
@@ -43,6 +43,17 @@ export function MultiSelect({
 }: MultiSelectProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
+    const triggerRef = useRef<HTMLButtonElement>(null);
+
+    // When used inside a Sheet/Dialog, portaling the popover to document.body
+    // puts the search input outside the dialog's focus trap (steals focus so
+    // typing is impossible) and stacks a second modal layer that can leave
+    // `body{pointer-events:none}` behind when the drawer closes. Render the
+    // content inside the nearest dialog instead. See searchable-select.tsx.
+    const getContainer = () =>
+        triggerRef.current?.closest<HTMLElement>(
+            '[data-slot="sheet-content"], [data-slot="dialog-content"]',
+        ) ?? undefined;
 
     const selected = options.filter((option) => value.includes(option.value));
 
@@ -74,10 +85,10 @@ export function MultiSelect({
                     setQuery('');
                 }
             }}
-            modal
         >
             <PopoverTrigger asChild>
                 <button
+                    ref={triggerRef}
                     type="button"
                     id={id}
                     disabled={disabled}
@@ -119,6 +130,7 @@ export function MultiSelect({
             </PopoverTrigger>
             <PopoverContent
                 align="start"
+                container={getContainer()}
                 className="w-[var(--radix-popover-trigger-width)] p-0"
             >
                 <div className="flex items-center border-b px-2">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\InteractsWithAppointmentBooking;
+use App\Enums\TeamRole;
 use App\Http\Requests\Appointments\SaveAppointmentRequest;
 use App\Models\Appointment;
 use App\Support\Appointments\AppointmentOptions;
@@ -22,13 +23,16 @@ class AppointmentController extends Controller
      */
     public function index(Request $request): Response
     {
-        $team = $request->user()->currentTeam;
+        $user = $request->user();
+        $team = $user->currentTeam;
         $timezone = $team->timezone ?: config('app.timezone');
 
         return Inertia::render('appointments/index', [
             'timezone' => $timezone,
             'appointments' => $team->appointments()
                 ->with(['service:id,title', 'location:id,name', 'specialist:id,name', 'customer:id,name,email,phone'])
+                // Admins and owners see the whole team's schedule; members only see their own.
+                ->unless($user->teamRole($team)?->isAtLeast(TeamRole::Admin), fn ($query) => $query->where('specialist_id', $user->id))
                 ->orderBy('start_at')
                 ->get()
                 ->map(fn (Appointment $appointment): array => $this->toAppointmentArray($appointment, $timezone)),
@@ -91,6 +95,7 @@ class AppointmentController extends Controller
         $available = SlotGenerator::isAvailableStart(
             $appointment->service,
             $appointment->specialist,
+            $team->id,
             $timezone,
             $start,
             $appointment->id,
@@ -127,11 +132,22 @@ class AppointmentController extends Controller
     }
 
     /**
-     * Ensure the appointment belongs to the user's current team.
+     * Ensure the user may act on the appointment.
+     *
+     * The appointment must belong to the user's current team, and members may
+     * only touch their own appointments while admins and owners may touch any.
      */
     protected function authorizeAppointment(Request $request, Appointment $appointment): void
     {
-        abort_unless($appointment->team_id === $request->user()->currentTeam->id, 403);
+        $user = $request->user();
+        $team = $user->currentTeam;
+
+        abort_unless($appointment->team_id === $team->id, 403);
+
+        abort_unless(
+            $user->teamRole($team)?->isAtLeast(TeamRole::Admin) || $appointment->specialist_id === $user->id,
+            403,
+        );
     }
 
     /**

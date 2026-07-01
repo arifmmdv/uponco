@@ -23,10 +23,10 @@ test('REPRO double POST same slot', function () {
     $service->specialists()->attach($user);
     $location->specialists()->attach($user);
     foreach (range(0, 6) as $d) {
-        WorkHour::factory()->for($user)->create(['day_of_week' => $d, 'start_time' => '09:00', 'end_time' => '17:00']);
+        WorkHour::factory()->for($user)->create(['team_id' => $team->id, 'day_of_week' => $d, 'start_time' => '09:00', 'end_time' => '17:00']);
     }
     $date = CarbonImmutable::now('America/New_York')->addWeek()->startOfWeek()->format('Y-m-d');
-    $slot = collect(SlotGenerator::generate($service, $user, $team->timezone, $date))->firstWhere('label', '09:00');
+    $slot = collect(SlotGenerator::generate($service, $user, $team->id, $team->timezone, $date))->firstWhere('label', '09:00');
 
     $payload = [
         'service_id' => $service->id, 'location_id' => $location->id, 'specialist_id' => $user->id,

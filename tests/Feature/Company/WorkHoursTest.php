@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\TeamRole;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\WorkHour;
 
@@ -8,6 +10,7 @@ test('work hours page is displayed with the full weekly schedule', function () {
     $team = $user->currentTeam;
 
     WorkHour::factory()->for($user)->create([
+        'team_id' => $team->id,
         'day_of_week' => 0,
         'start_time' => '09:00',
         'end_time' => '17:00',
@@ -61,7 +64,7 @@ test('updating replaces the existing work hours', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
-    WorkHour::factory()->for($user)->create(['day_of_week' => 5]);
+    WorkHour::factory()->for($user)->create(['team_id' => $team->id, 'day_of_week' => 5]);
 
     $this->actingAs($user)
         ->put(route('company.work-hours.update', ['current_team' => $team->slug]), [
@@ -105,6 +108,46 @@ test('a slot end time must be after its start time', function () {
             ]),
         ])
         ->assertSessionHasErrors('schedule.monday.slots.0.end');
+});
+
+test('work hours are scoped per team so a user keeps a distinct schedule for each', function () {
+    $user = User::factory()->create();
+    $teamA = $user->currentTeam;
+
+    $teamB = Team::factory()->create();
+    $teamB->members()->attach($user, ['role' => TeamRole::Owner->value]);
+
+    // Existing hours on team B must never surface while editing team A.
+    WorkHour::factory()->for($user)->create([
+        'team_id' => $teamB->id,
+        'day_of_week' => 4,
+        'start_time' => '10:00',
+        'end_time' => '14:00',
+    ]);
+
+    // Save a Monday schedule for team A only.
+    $this->actingAs($user)
+        ->put(route('company.work-hours.update', ['current_team' => $teamA->slug]), [
+            'schedule' => array_merge(emptySchedule(), [
+                'monday' => ['enabled' => true, 'slots' => [['start' => '09:00', 'end' => '17:00']]],
+            ]),
+        ])
+        ->assertSessionHasNoErrors();
+
+    // Team A holds its own row; team B's schedule is untouched.
+    expect($user->workHoursFor($teamA)->count())->toBe(1);
+    expect($user->workHoursFor($teamA)->where('day_of_week', 0)->exists())->toBeTrue();
+    expect($user->workHoursFor($teamB)->count())->toBe(1);
+    expect($user->workHoursFor($teamB)->where('day_of_week', 4)->exists())->toBeTrue();
+
+    // The edit page for team A shows only team A's schedule.
+    $this->actingAs($user)
+        ->get(route('company.work-hours.edit', ['current_team' => $teamA->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('schedule.monday.enabled', true)
+            ->where('schedule.friday.enabled', false)
+        );
 });
 
 /**

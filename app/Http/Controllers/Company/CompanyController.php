@@ -81,7 +81,7 @@ class CompanyController extends Controller
      */
     protected function workProfileSummary(User $user, Team $team): array
     {
-        $workHours = $user->workHours()->get();
+        $workHours = $user->workHoursFor($team)->get();
 
         $timezone = $team->timezone ?: config('app.timezone');
         $now = CarbonImmutable::now($timezone);

@@ -33,6 +33,7 @@ class SlotGenerator
     public static function generate(
         Service $service,
         User $specialist,
+        int $teamId,
         string $timezone,
         string $date,
         ?int $ignoreAppointmentId = null,
@@ -45,7 +46,7 @@ class SlotGenerator
 
         $dayOfWeek = $day->dayOfWeekIso - 1; // 0 = Monday ... 6 = Sunday
 
-        $workHours = $specialist->workHours()
+        $workHours = $specialist->workHoursFor($teamId)
             ->where('day_of_week', $dayOfWeek)
             ->orderBy('start_time')
             ->get();
@@ -93,6 +94,7 @@ class SlotGenerator
     public static function isAvailableStart(
         Service $service,
         User $specialist,
+        int $teamId,
         string $timezone,
         CarbonInterface $startAt,
         ?int $ignoreAppointmentId = null,
@@ -103,7 +105,7 @@ class SlotGenerator
 
         $target = CarbonImmutable::parse($startAt)->utc()->toIso8601String();
 
-        foreach (static::generate($service, $specialist, $timezone, $date, $ignoreAppointmentId, $now) as $slot) {
+        foreach (static::generate($service, $specialist, $teamId, $timezone, $date, $ignoreAppointmentId, $now) as $slot) {
             if ($slot['start'] === $target) {
                 return $slot['available'];
             }

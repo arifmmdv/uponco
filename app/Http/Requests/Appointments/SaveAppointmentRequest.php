@@ -131,6 +131,7 @@ class SaveAppointmentRequest extends FormRequest
             $available = SlotGenerator::isAvailableStart(
                 $service,
                 $specialist,
+                $this->team()->id,
                 $this->teamTimezone(),
                 $this->startAt(),
                 $this->route('appointment')?->id,

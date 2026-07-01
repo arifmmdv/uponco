@@ -122,6 +122,7 @@ trait InteractsWithAppointmentBooking
         return SlotGenerator::generate(
             $service,
             $specialist,
+            $team->id,
             $team->timezone ?: config('app.timezone'),
             $data['date'],
             $data['appointment_id'] ?? null,

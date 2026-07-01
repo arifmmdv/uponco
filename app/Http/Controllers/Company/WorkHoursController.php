@@ -19,7 +19,9 @@ class WorkHoursController extends Controller
      */
     public function edit(Request $request): Response
     {
-        $workHours = $request->user()->workHours()->orderBy('start_time')->get();
+        $team = $request->user()->currentTeam;
+
+        $workHours = $request->user()->workHoursFor($team)->orderBy('start_time')->get();
 
         return Inertia::render('company/work-profile/work-hours', [
             'schedule' => $this->toWeeklySchedule($workHours),
@@ -33,9 +35,10 @@ class WorkHoursController extends Controller
     {
         $schedule = $request->validated('schedule');
         $userId = $request->user()->id;
+        $teamId = $request->user()->currentTeam->id;
 
-        DB::transaction(function () use ($schedule, $userId): void {
-            WorkHour::where('user_id', $userId)->delete();
+        DB::transaction(function () use ($schedule, $userId, $teamId): void {
+            WorkHour::where('user_id', $userId)->where('team_id', $teamId)->delete();
 
             $rows = [];
             $now = now();
@@ -48,6 +51,7 @@ class WorkHoursController extends Controller
                 foreach ($schedule[$day]['slots'] ?? [] as $slot) {
                     $rows[] = [
                         'user_id' => $userId,
+                        'team_id' => $teamId,
                         'day_of_week' => $dayOfWeek,
                         'start_time' => $slot['start'],
                         'end_time' => $slot['end'],

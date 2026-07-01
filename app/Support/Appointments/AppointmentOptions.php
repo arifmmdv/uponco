@@ -81,7 +81,11 @@ class AppointmentOptions
         $timezone = $team->timezone ?: config('app.timezone');
 
         return $team->members()
-            ->with(['services:id', 'locations:id', 'workHours'])
+            ->with([
+                'services:id',
+                'locations:id',
+                'workHours' => fn ($query) => $query->where('team_id', $team->id),
+            ])
             ->orderBy('name')
             ->get()
             ->map(function (User $member) use ($timezone): array {

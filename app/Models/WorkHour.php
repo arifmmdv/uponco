@@ -37,6 +37,7 @@ class WorkHour extends Model
      */
     protected $fillable = [
         'user_id',
+        'team_id',
         'day_of_week',
         'start_time',
         'end_time',
@@ -50,5 +51,15 @@ class WorkHour extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the team the work hour applies to.
+     *
+     * @return BelongsTo<Team, $this>
+     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
     }
 }

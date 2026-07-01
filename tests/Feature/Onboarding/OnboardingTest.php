@@ -71,6 +71,7 @@ test('mandatory steps auto-complete when their data already exists', function ()
     $user->profile()->create(['name' => $user->name, 'job_title' => 'Stylist']);
     WorkHour::create([
         'user_id' => $user->id,
+        'team_id' => $team->id,
         'day_of_week' => 0,
         'start_time' => '09:00',
         'end_time' => '17:00',
@@ -158,6 +159,7 @@ test('the wizard disappears once every step is resolved', function () {
     $user->profile()->create(['name' => $user->name, 'job_title' => 'Stylist']);
     WorkHour::create([
         'user_id' => $user->id,
+        'team_id' => $team->id,
         'day_of_week' => 0,
         'start_time' => '09:00',
         'end_time' => '17:00',

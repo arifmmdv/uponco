@@ -154,7 +154,7 @@ class OnboardingProgress extends Model
             OnboardingStep::Locations => $team->locations()->exists(),
             OnboardingStep::Services => $team->services()->exists(),
             OnboardingStep::Profile => filled($user->profile?->job_title),
-            OnboardingStep::WorkHours => $user->workHours()->exists(),
+            OnboardingStep::WorkHours => $user->workHoursFor($team)->exists(),
         };
     }
 

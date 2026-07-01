@@ -41,6 +41,7 @@ function bookableSetup(array $serviceOverrides = []): array
 
     foreach (range(0, 6) as $dayOfWeek) {
         WorkHour::factory()->for($user)->create([
+            'team_id' => $team->id,
             'day_of_week' => $dayOfWeek,
             'start_time' => '09:00',
             'end_time' => '17:00',
@@ -74,6 +75,99 @@ test('the appointments page can be rendered', function () {
         ->actingAs($user)
         ->get(route('appointments.index', ['current_team' => $team->slug]))
         ->assertOk();
+});
+
+test('admins see every appointment in the team', function () {
+    $setup = bookableSetup();
+    $member = User::factory()->create();
+    $setup['team']->members()->attach($member, ['role' => TeamRole::Member->value]);
+
+    Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+    ]);
+    Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $member->id,
+    ]);
+
+    $this
+        ->actingAs($setup['user'])
+        ->get(route('appointments.index', ['current_team' => $setup['team']->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->has('appointments', 2));
+});
+
+test('members only see appointments assigned to them', function () {
+    $setup = bookableSetup();
+    $member = User::factory()->create();
+    $setup['team']->members()->attach($member, ['role' => TeamRole::Member->value]);
+
+    $mine = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $member->id,
+    ]);
+    Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+    ]);
+
+    $this
+        ->actingAs($member)
+        ->get(route('appointments.index', ['current_team' => $setup['team']->slug]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('appointments', 1)
+            ->where('appointments.0.id', $mine->id)
+        );
+});
+
+test('a member cannot delete an appointment that is not theirs', function () {
+    $setup = bookableSetup();
+    $member = User::factory()->create();
+    $setup['team']->members()->attach($member, ['role' => TeamRole::Member->value]);
+
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+    ]);
+
+    $this
+        ->actingAs($member)
+        ->delete(route('appointments.destroy', ['current_team' => $setup['team']->slug, 'appointment' => $appointment->id]))
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('appointments', ['id' => $appointment->id, 'deleted_at' => null]);
+});
+
+test('a member can delete their own appointment', function () {
+    $setup = bookableSetup();
+    $member = User::factory()->create();
+    $setup['team']->members()->attach($member, ['role' => TeamRole::Member->value]);
+
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $member->id,
+    ]);
+
+    $this
+        ->actingAs($member)
+        ->delete(route('appointments.destroy', ['current_team' => $setup['team']->slug, 'appointment' => $appointment->id]))
+        ->assertRedirect();
+
+    $this->assertSoftDeleted('appointments', ['id' => $appointment->id]);
 });
 
 test('an appointment can be created and creates a customer', function () {
@@ -211,6 +305,7 @@ test('the slot generator produces available times within work hours', function (
     $slots = SlotGenerator::generate(
         $setup['service'],
         $setup['user'],
+        $setup['team']->id,
         $setup['team']->timezone,
         $setup['startAt']->format('Y-m-d'),
     );
@@ -240,6 +335,7 @@ test('the slot generator disables already booked times for the specialist', func
     $slots = SlotGenerator::generate(
         $setup['service'],
         $setup['user'],
+        $setup['team']->id,
         $setup['team']->timezone,
         $setup['startAt']->format('Y-m-d'),
     );

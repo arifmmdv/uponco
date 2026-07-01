@@ -59,6 +59,20 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * Get the user's weekly work hours scoped to a single team.
+     *
+     * Work hours are per team, so callers must always narrow by team when
+     * reading or writing a schedule.
+     *
+     * @return HasMany<WorkHour, $this>
+     */
+    public function workHoursFor(Team|int $team): HasMany
+    {
+        return $this->workHours()
+            ->where('team_id', $team instanceof Team ? $team->id : $team);
+    }
+
+    /**
      * Get the services this user provides as a specialist.
      *
      * @return BelongsToMany<Service, $this>

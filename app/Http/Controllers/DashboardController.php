@@ -37,13 +37,16 @@ class DashboardController extends Controller
         $onboarding = $this->onboarding($user, $team);
         $timezone = $team->timezone ?: config('app.timezone');
 
+        // Admins and owners see the whole team's bookings; members only see their own.
+        $specialistId = $user->teamRole($team)?->isAtLeast(TeamRole::Admin) ? null : $user->id;
+
         return Inertia::render('dashboard', [
             'onboarding' => $onboarding,
             'timezone' => $timezone,
-            'stats' => $onboarding === null ? $this->stats($team) : null,
-            'weeklyTrend' => $onboarding === null ? $this->weeklyTrend($team, $timezone) : null,
+            'stats' => $onboarding === null ? $this->stats($team, $specialistId) : null,
+            'weeklyTrend' => $onboarding === null ? $this->weeklyTrend($team, $timezone, $specialistId) : null,
             'upcomingAppointments' => $onboarding === null
-                ? $this->upcomingAppointments($team, $timezone)
+                ? $this->upcomingAppointments($team, $timezone, $specialistId)
                 : null,
             'formOptions' => $onboarding === null ? $this->formOptions($team) : null,
             'availableSlots' => Inertia::optional(fn (): array => $this->availableSlots($request, $team)),
@@ -91,14 +94,20 @@ class DashboardController extends Controller
     /**
      * Build the headline metrics shown across the dashboard.
      *
+     * When $specialistId is provided the booking counts are limited to that
+     * specialist so members only see their own totals.
+     *
      * @return array{customers: int, totalBookings: int, upcoming: int, services: int, locations: int}
      */
-    protected function stats(Team $team): array
+    protected function stats(Team $team, ?int $specialistId = null): array
     {
+        $bookings = fn () => $team->appointments()
+            ->when($specialistId, fn ($query) => $query->where('specialist_id', $specialistId));
+
         return [
             'customers' => $team->customers()->count(),
-            'totalBookings' => $team->appointments()->count(),
-            'upcoming' => $team->appointments()->where('start_at', '>=', now())->count(),
+            'totalBookings' => $bookings()->count(),
+            'upcoming' => $bookings()->where('start_at', '>=', now())->count(),
             'services' => $team->services()->count(),
             'locations' => $team->locations()->count(),
         ];
@@ -107,15 +116,19 @@ class DashboardController extends Controller
     /**
      * Build a 7-day booking trend (today plus the next six days) for the chart.
      *
+     * When $specialistId is provided the trend is limited to that specialist so
+     * members only see their own bookings.
+     *
      * @return array<int, array{label: string, date: string, count: int, isToday: bool}>
      */
-    protected function weeklyTrend(Team $team, string $timezone): array
+    protected function weeklyTrend(Team $team, string $timezone, ?int $specialistId = null): array
     {
         $start = CarbonImmutable::now($timezone)->startOfDay();
         $end = $start->addDays(7);
         $today = $start->toDateString();
 
         $counts = $team->appointments()
+            ->when($specialistId, fn ($query) => $query->where('specialist_id', $specialistId))
             ->whereBetween('start_at', [$start->utc(), $end->utc()])
             ->get(['start_at'])
             ->groupBy(fn (Appointment $appointment): string => $appointment->start_at
@@ -141,12 +154,16 @@ class DashboardController extends Controller
     /**
      * Fetch the next handful of upcoming appointments for the sidebar list.
      *
+     * When $specialistId is provided the list is limited to that specialist so
+     * members only see their own upcoming appointments.
+     *
      * @return array<int, array<string, mixed>>
      */
-    protected function upcomingAppointments(Team $team, string $timezone): array
+    protected function upcomingAppointments(Team $team, string $timezone, ?int $specialistId = null): array
     {
         return $team->appointments()
             ->with(['service:id,title', 'location:id,name', 'specialist:id,name', 'customer:id,name'])
+            ->when($specialistId, fn ($query) => $query->where('specialist_id', $specialistId))
             ->where('start_at', '>=', now())
             ->orderBy('start_at')
             ->limit(6)
@@ -236,7 +253,7 @@ class DashboardController extends Controller
                 'description' => $user->profile?->description,
             ],
             'workHours' => [
-                'schedule' => $this->toWeeklySchedule($user->workHours()->orderBy('start_time')->get()),
+                'schedule' => $this->toWeeklySchedule($user->workHoursFor($team)->orderBy('start_time')->get()),
             ],
         ];
     }
