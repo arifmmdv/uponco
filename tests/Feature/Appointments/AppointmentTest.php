@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AppointmentChange;
 use App\Enums\TeamRole;
 use App\Models\Appointment;
 use App\Models\Customer;
@@ -344,6 +345,52 @@ test('an appointment can be updated', function () {
         'notes' => 'Updated note',
         'start_at' => $setup['startAt']->toDateTimeString(),
     ]);
+});
+
+test('updating an appointment emails the customer that it changed', function () {
+    Notification::fake();
+    $setup = bookableSetup();
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'start_at' => $setup['startAt']->addDay(),
+        'end_at' => $setup['startAt']->addDay()->addMinutes(60),
+    ]);
+
+    $this
+        ->actingAs($setup['user'])
+        ->patch(route('appointments.update', ['current_team' => $setup['team']->slug, 'appointment' => $appointment]), appointmentPayload($setup))
+        ->assertRedirect();
+
+    Notification::assertSentOnDemand(
+        AppointmentBooked::class,
+        fn (AppointmentBooked $notification, array $channels, object $notifiable): bool => $notifiable->routeNotificationFor('mail') === 'jane@example.com'
+            && $notification->change === AppointmentChange::Updated,
+    );
+});
+
+test('the update email clearly states the appointment was changed', function () {
+    $setup = bookableSetup();
+    $customer = Customer::factory()->for($setup['team'])->create([
+        'name' => 'Jane Doe',
+        'email' => 'jane@example.com',
+    ]);
+    $appointment = Appointment::factory()->create([
+        'team_id' => $setup['team']->id,
+        'service_id' => $setup['service']->id,
+        'location_id' => $setup['location']->id,
+        'specialist_id' => $setup['user']->id,
+        'customer_id' => $customer->id,
+        'start_at' => $setup['startAt'],
+        'end_at' => $setup['startAt']->addMinutes(60),
+    ]);
+
+    $mail = (new AppointmentBooked($appointment, AppointmentChange::Updated))->toMail($customer);
+
+    expect($mail->subject)->toContain('updated');
+    expect(collect($mail->introLines)->implode("\n"))->toContain('updated');
 });
 
 test('an appointment can be rescheduled to an available slot', function () {

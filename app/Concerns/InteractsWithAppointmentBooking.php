@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\Enums\AppointmentChange;
 use App\Http\Requests\Appointments\SaveAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\Customer;
@@ -20,9 +21,6 @@ trait InteractsWithAppointmentBooking
 {
     /**
      * Create the appointment for the request and notify the customer by email.
-     *
-     * The booking confirmation is only sent when the customer supplied an email
-     * address; phone-only customers simply don't receive one.
      */
     protected function createAppointment(Team $team, SaveAppointmentRequest $request): Appointment
     {
@@ -33,16 +31,50 @@ trait InteractsWithAppointmentBooking
             'customer_id' => $customer->id,
         ]);
 
-        if ($customer->email) {
-            try {
-                Notification::route('mail', $customer->email)
-                    ->notify(new AppointmentBooked($appointment));
-            } catch (\Throwable $e) {
-                report($e);
-            }
-        }
+        $appointment->setRelation('customer', $customer);
+        $this->notifyCustomer($appointment, AppointmentChange::Created);
 
         return $appointment;
+    }
+
+    /**
+     * Apply the request changes to an existing appointment and notify the customer.
+     */
+    protected function updateAppointment(Team $team, SaveAppointmentRequest $request, Appointment $appointment): Appointment
+    {
+        $customer = $this->resolveCustomer($team, $request->customerData());
+
+        $appointment->update([
+            ...$request->appointmentData(),
+            'customer_id' => $customer->id,
+        ]);
+
+        $appointment->setRelation('customer', $customer);
+        $this->notifyCustomer($appointment, AppointmentChange::Updated);
+
+        return $appointment;
+    }
+
+    /**
+     * Email the customer confirming that their appointment was created or updated.
+     *
+     * The email is only sent when the customer supplied an address; phone-only
+     * customers simply don't receive one.
+     */
+    protected function notifyCustomer(Appointment $appointment, AppointmentChange $change): void
+    {
+        $customer = $appointment->customer;
+
+        if (! $customer?->email) {
+            return;
+        }
+
+        try {
+            Notification::route('mail', $customer->email)
+                ->notify(new AppointmentBooked($appointment, $change));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

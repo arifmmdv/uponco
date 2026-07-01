@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Appointments;
 
+use App\Enums\AppointmentChange;
 use App\Models\Appointment;
 use App\Support\Appointments\AppointmentCalendar;
 use Illuminate\Bus\Queueable;
@@ -15,9 +16,14 @@ class AppointmentBooked extends Notification implements ShouldQueue
 
     /**
      * Create a new notification instance.
+     *
+     * The wording adapts to whether the appointment was just created or an
+     * existing one was updated, so the customer always knows what happened.
      */
-    public function __construct(public Appointment $appointment)
-    {
+    public function __construct(
+        public Appointment $appointment,
+        public AppointmentChange $change = AppointmentChange::Created,
+    ) {
         //
     }
 
@@ -45,10 +51,20 @@ class AppointmentBooked extends Notification implements ShouldQueue
 
         $location = $appointment->location?->name ?? __('Online');
 
+        $isUpdate = $this->change === AppointmentChange::Updated;
+
+        $subject = $isUpdate
+            ? __('Your appointment with :team has been updated', ['team' => $team->name])
+            : __('Your appointment with :team is confirmed', ['team' => $team->name]);
+
+        $intro = $isUpdate
+            ? __('Your appointment with :team has been updated. Here are the new details:', ['team' => $team->name])
+            : __('Your appointment with :team is booked. Here are the details:', ['team' => $team->name]);
+
         return (new MailMessage)
-            ->subject(__('Your appointment with :team is confirmed', ['team' => $team->name]))
+            ->subject($subject)
             ->greeting(__('Hi :name,', ['name' => $appointment->customer->name]))
-            ->line(__('Your appointment with :team is booked. Here are the details:', ['team' => $team->name]))
+            ->line($intro)
             ->line(__('**Service:** :service', ['service' => $appointment->service->title]))
             ->line(__('**Specialist:** :specialist', ['specialist' => $appointment->specialist->name]))
             ->line(__('**Location:** :location', ['location' => $location]))

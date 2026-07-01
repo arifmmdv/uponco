@@ -62,12 +62,7 @@ class AppointmentController extends Controller
 
         $team = $request->user()->currentTeam;
 
-        $customer = $this->resolveCustomer($team, $request->customerData());
-
-        $appointment->update([
-            ...$request->appointmentData(),
-            'customer_id' => $customer->id,
-        ]);
+        $this->updateAppointment($team, $request, $appointment);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Appointment updated.')]);
 
