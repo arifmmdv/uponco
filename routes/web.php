@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TeamRole;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\Company\BrandController;
 use App\Http\Controllers\Company\BusinessController;
@@ -51,41 +52,46 @@ Route::prefix('{current_team}')
         Route::patch('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
-        Route::get('company', [CompanyController::class, 'index'])->name('company.index');
-
-        Route::get('company/brand', [BrandController::class, 'index'])->name('company.brand.index');
-
+        // Every team member manages their own work profile and availability.
         Route::get('company/work-profile', [WorkProfileController::class, 'edit'])->name('company.work-profile.edit');
         Route::patch('company/work-profile', [WorkProfileController::class, 'update'])->name('company.work-profile.update');
 
         Route::get('company/work-hours', [WorkHoursController::class, 'edit'])->name('company.work-hours.edit');
         Route::put('company/work-hours', [WorkHoursController::class, 'update'])->name('company.work-hours.update');
 
-        Route::redirect('company/business', 'company/business/general')->name('company.business');
-        Route::get('company/business/general', [BusinessController::class, 'edit'])->name('company.business.edit');
-        Route::patch('company/business/general', [BusinessController::class, 'update'])->name('company.business.update');
-        Route::delete('company/business/general', [BusinessController::class, 'destroy'])->name('company.business.destroy');
+        // Company management (business, team, services, locations, brand) is
+        // restricted to admins and owners. Members are gated out entirely.
+        Route::middleware(EnsureTeamMembership::class.':'.TeamRole::Admin->value)->group(function () {
+            Route::get('company', [CompanyController::class, 'index'])->name('company.index');
 
-        Route::get('company/business/members', [BusinessController::class, 'members'])->name('company.business.members.index');
-        Route::patch('company/business/members/{user}', [BusinessMemberController::class, 'update'])->name('company.business.members.update');
-        Route::delete('company/business/members/{user}', [BusinessMemberController::class, 'destroy'])->name('company.business.members.destroy');
+            Route::get('company/brand', [BrandController::class, 'index'])->name('company.brand.index');
 
-        Route::post('company/business/invitations', [BusinessInvitationController::class, 'store'])->name('company.business.invitations.store');
-        Route::delete('company/business/invitations/{invitation}', [BusinessInvitationController::class, 'destroy'])->name('company.business.invitations.destroy');
+            Route::redirect('company/business', 'company/business/general')->name('company.business');
+            Route::get('company/business/general', [BusinessController::class, 'edit'])->name('company.business.edit');
+            Route::patch('company/business/general', [BusinessController::class, 'update'])->name('company.business.update');
+            Route::delete('company/business/general', [BusinessController::class, 'destroy'])->name('company.business.destroy');
 
-        Route::get('company/locations', [LocationController::class, 'index'])->name('company.locations.index');
-        Route::post('company/locations', [LocationController::class, 'store'])->name('company.locations.store');
-        Route::patch('company/locations/{location}', [LocationController::class, 'update'])->name('company.locations.update');
-        Route::delete('company/locations/{location}', [LocationController::class, 'destroy'])->name('company.locations.destroy');
+            Route::get('company/business/members', [BusinessController::class, 'members'])->name('company.business.members.index');
+            Route::patch('company/business/members/{user}', [BusinessMemberController::class, 'update'])->name('company.business.members.update');
+            Route::delete('company/business/members/{user}', [BusinessMemberController::class, 'destroy'])->name('company.business.members.destroy');
 
-        Route::get('company/services', [ServiceController::class, 'index'])->name('company.services.index');
-        Route::post('company/services', [ServiceController::class, 'store'])->name('company.services.store');
-        Route::patch('company/services/{service}', [ServiceController::class, 'update'])->name('company.services.update');
-        Route::delete('company/services/{service}', [ServiceController::class, 'destroy'])->name('company.services.destroy');
+            Route::post('company/business/invitations', [BusinessInvitationController::class, 'store'])->name('company.business.invitations.store');
+            Route::delete('company/business/invitations/{invitation}', [BusinessInvitationController::class, 'destroy'])->name('company.business.invitations.destroy');
 
-        Route::post('company/service-categories', [ServiceCategoryController::class, 'store'])->name('company.service-categories.store');
-        Route::patch('company/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'update'])->name('company.service-categories.update');
-        Route::delete('company/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'destroy'])->name('company.service-categories.destroy');
+            Route::get('company/locations', [LocationController::class, 'index'])->name('company.locations.index');
+            Route::post('company/locations', [LocationController::class, 'store'])->name('company.locations.store');
+            Route::patch('company/locations/{location}', [LocationController::class, 'update'])->name('company.locations.update');
+            Route::delete('company/locations/{location}', [LocationController::class, 'destroy'])->name('company.locations.destroy');
+
+            Route::get('company/services', [ServiceController::class, 'index'])->name('company.services.index');
+            Route::post('company/services', [ServiceController::class, 'store'])->name('company.services.store');
+            Route::patch('company/services/{service}', [ServiceController::class, 'update'])->name('company.services.update');
+            Route::delete('company/services/{service}', [ServiceController::class, 'destroy'])->name('company.services.destroy');
+
+            Route::post('company/service-categories', [ServiceCategoryController::class, 'store'])->name('company.service-categories.store');
+            Route::patch('company/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'update'])->name('company.service-categories.update');
+            Route::delete('company/service-categories/{serviceCategory}', [ServiceCategoryController::class, 'destroy'])->name('company.service-categories.destroy');
+        });
     });
 
 Route::middleware(['auth'])->group(function () {

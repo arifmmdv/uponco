@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Building2, FolderGit2, LayoutGrid } from 'lucide-react';
+import {
+    BookOpen,
+    Building2,
+    FolderGit2,
+    LayoutGrid,
+    UserCog,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,8 +20,10 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { isTeamManager } from '@/lib/teams';
 import { dashboard } from '@/routes';
 import { index as company } from '@/routes/company';
+import { edit as workProfile } from '@/routes/company/work-profile';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
@@ -32,11 +40,17 @@ export function AppSidebar() {
         },
         ...(page.props.currentTeam
             ? [
-                  {
-                      title: 'Company',
-                      href: company(page.props.currentTeam.slug),
-                      icon: Building2,
-                  },
+                  isTeamManager(page.props.currentTeam.role)
+                      ? {
+                            title: 'Company',
+                            href: company(page.props.currentTeam.slug),
+                            icon: Building2,
+                        }
+                      : {
+                            title: 'Profile',
+                            href: workProfile(page.props.currentTeam.slug),
+                            icon: UserCog,
+                        },
               ]
             : []),
     ];

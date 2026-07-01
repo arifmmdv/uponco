@@ -1,10 +1,18 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, CalendarDays, LayoutGrid, Users } from 'lucide-react';
+import {
+    Building2,
+    CalendarDays,
+    LayoutGrid,
+    UserCog,
+    Users,
+} from 'lucide-react';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { isTeamManager } from '@/lib/teams';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as appointments } from '@/routes/appointments';
 import { index as company } from '@/routes/company';
+import { edit as workProfile } from '@/routes/company/work-profile';
 import { index as customers } from '@/routes/customers';
 import type { NavItem } from '@/types';
 
@@ -34,15 +42,21 @@ export function AppBottomNav() {
             href: customers(currentTeam.slug),
             icon: Users,
         },
-        {
-            title: 'Company',
-            href: company(currentTeam.slug),
-            icon: Building2,
-        },
+        isTeamManager(currentTeam.role)
+            ? {
+                  title: 'Company',
+                  href: company(currentTeam.slug),
+                  icon: Building2,
+              }
+            : {
+                  title: 'Profile',
+                  href: workProfile(currentTeam.slug),
+                  icon: UserCog,
+              },
     ];
 
     return (
-        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-sidebar-border/80 bg-background safe-area-inset-bottom safe-area-inset-left safe-area-inset-right lg:hidden">
+        <nav className="safe-area-inset-bottom safe-area-inset-left safe-area-inset-right fixed inset-x-0 bottom-0 z-40 border-t border-sidebar-border/80 bg-background lg:hidden">
             <div className="flex h-16 items-stretch justify-around">
                 {items.map((item) => {
                     const active =

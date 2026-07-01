@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Building2, CalendarDays, LayoutGrid, Users } from 'lucide-react';
+import {
+    Building2,
+    CalendarDays,
+    LayoutGrid,
+    UserCog,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { TeamSwitcher } from '@/components/team-switcher';
@@ -26,10 +32,12 @@ import {
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
+import { isTeamManager } from '@/lib/teams';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as appointments } from '@/routes/appointments';
 import { index as company } from '@/routes/company';
+import { edit as workProfile } from '@/routes/company/work-profile';
 import { index as customers } from '@/routes/customers';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -78,18 +86,24 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                       href: customers(currentTeam.slug),
                       icon: Users,
                   },
-                  {
-                      title: 'Company',
-                      href: company(currentTeam.slug),
-                      icon: Building2,
-                  },
+                  isTeamManager(currentTeam.role)
+                      ? {
+                            title: 'Company',
+                            href: company(currentTeam.slug),
+                            icon: Building2,
+                        }
+                      : {
+                            title: 'Profile',
+                            href: workProfile(currentTeam.slug),
+                            icon: UserCog,
+                        },
               ]
             : []),
     ];
 
     return (
         <>
-            <div className="border-b border-sidebar-border/80 safe-area-inset-top safe-area-inset-left safe-area-inset-right">
+            <div className="safe-area-inset-top safe-area-inset-left safe-area-inset-right border-b border-sidebar-border/80">
                 <div className="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
                     <Link
                         href={dashboardUrl}
