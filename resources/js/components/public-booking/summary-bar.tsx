@@ -57,7 +57,7 @@ export default function SummaryBar({
             {chips.map((chip) => (
                 <span
                     key={chip.value}
-                    className="inline-flex max-w-full animate-in items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-xs font-medium shadow-xs duration-300 fade-in-0 zoom-in-95"
+                    className="inline-flex max-w-full animate-in items-center gap-1.5 rounded-md border bg-card px-2.5 py-1 text-xs font-medium shadow-xs duration-300 fade-in-0 zoom-in-95"
                 >
                     <chip.icon className="size-3.5 shrink-0 text-primary" />
                     <span className="truncate">{chip.value}</span>

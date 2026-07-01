@@ -1,7 +1,9 @@
 import { Head } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import BookingFooter from '@/components/public-booking/booking-footer';
+import BookingHeader from '@/components/public-booking/booking-header';
+import type { PublicTheme } from '@/components/public-booking/booking-header';
 import StepDateTime from '@/components/public-booking/step-datetime';
 import StepDetails from '@/components/public-booking/step-details';
 import StepSelection from '@/components/public-booking/step-selection';
@@ -16,7 +18,7 @@ import type {
 } from '@/types';
 
 type Props = {
-    company: { name: string; slug: string };
+    company: { name: string; slug: string; logo?: string | null };
     timezone: string;
     services: AppointmentServiceOption[];
     locations: AppointmentLocationOption[];
@@ -29,6 +31,20 @@ const STEP_TITLES = [
     'Pick a date & time',
     'Almost done',
 ];
+
+// The public page keeps its own light/dark preference, separate from the
+// dashboard's appearance so a visitor's choice never affects the team's user.
+const THEME_STORAGE_KEY = 'public-booking-appearance';
+
+function readStoredTheme(): PublicTheme {
+    if (typeof window === 'undefined') {
+        return 'light';
+    }
+
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === 'dark'
+        ? 'dark'
+        : 'light';
+}
 
 export default function PublicAppointmentBooking({
     company,
@@ -49,28 +65,28 @@ export default function PublicAppointmentBooking({
 
     const { step, confirmed } = booking;
 
-    // The public booking page is always presented in light theme, regardless of
-    // the visitor's system or stored appearance preference.
+    const [theme, setTheme] = useState<PublicTheme>(readStoredTheme);
+
+    // Apply and persist the visitor's chosen theme for the public page.
     useEffect(() => {
         const root = document.documentElement;
-        root.classList.remove('dark');
-        root.style.colorScheme = 'light';
-    }, []);
+        root.classList.toggle('dark', theme === 'dark');
+        root.style.colorScheme = theme;
+        window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    }, [theme]);
 
     return (
         <div className="flex min-h-svh w-full justify-center bg-muted/30">
             <Head title={`Book an appointment · ${company.name}`} />
 
             <div className="flex w-full max-w-[460px] flex-col">
-                <header className="space-y-4 px-5 pt-6 pb-4">
-                    <div className="text-center">
-                        <h1 className="text-lg font-semibold">
-                            {company.name}
-                        </h1>
-                        <p className="text-xs text-muted-foreground">
-                            Book an appointment
-                        </p>
-                    </div>
+                <header className="space-y-4 px-5 pt-4 pb-3">
+                    <BookingHeader
+                        companyName={company.name}
+                        logoUrl={company.logo}
+                        theme={theme}
+                        onThemeChange={setTheme}
+                    />
 
                     {confirmed === null && <SummaryBar {...booking.summary} />}
                 </header>
@@ -86,7 +102,7 @@ export default function PublicAppointmentBooking({
                         />
                     ) : (
                         <div key={step} className={booking.stepClass}>
-                            <h2 className="mb-5 text-base font-semibold">
+                            <h2 className="mb-4 text-base font-semibold">
                                 {STEP_TITLES[step]}
                             </h2>
 
